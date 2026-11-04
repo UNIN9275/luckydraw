@@ -84,7 +84,7 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--gold)}
 /* 추첨 무대 */
 .stage-head{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:14px;padding-top:var(--ttop,36px)}
 .stage-head .sp{display:none}
-.etitle{white-space:pre-line;line-height:1.25;width:100%;text-align:center;font-size:min(var(--tsz,40px),15vw);font-weight:400;color:var(--gold2);text-shadow:0 0 22px rgba(246,196,83,.35)}
+.etitle{white-space:pre-line;line-height:1.25;width:100%;text-align:center;font-size:var(--tsz,40px);font-weight:400;color:var(--gold2);text-shadow:0 0 22px rgba(246,196,83,.35)}
 .ptabs{display:none}  /* 추첨 화면 위쪽 등수 칸은 숨김 (등수·상품·진행은 왼쪽 상품 칸에 표시) */
 .ptab{padding:9px 16px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-weight:700}
 .ptab.on{background:var(--gold);color:#271b00;border-color:var(--gold)}
@@ -207,12 +207,22 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--gold)}
 /* 추첨 화면: 왼쪽 상품 칸·오른쪽 당첨자 칸을 왼쪽으로 모으고 글씨를 키움 */
 @media(min-width:1101px){
   #pg-draw.page{max-width:none;padding-left:20px;padding-right:20px}
-  #pg-draw .stage{grid-template-columns:380px minmax(0,1fr) minmax(340px,max-content);justify-content:stretch;gap:22px}
-  #pg-draw .side{justify-self:end}
+  #pg-draw.on{display:grid;grid-template-columns:300px minmax(0,1fr) minmax(340px,max-content);column-gap:22px;align-items:start;padding-top:10px}
+  #pg-draw .stage{display:contents}
+  #pg-draw .stage-head{grid-column:2;grid-row:1}
+  #pg-draw .prodbar{grid-column:2;grid-row:2}
+  #pg-draw .stage>div:nth-child(2){grid-column:2;grid-row:3}
+  #pg-draw .prodpanel{grid-column:1;grid-row:1 / span 3;position:sticky;top:8px;padding:4px 0;margin-top:0}
+  #pg-draw .side{grid-column:3;grid-row:1 / span 3;justify-self:end;margin-top:0}
+  #pg-draw .pp-cat{font-size:clamp(20px,1.9vw,30px);margin-bottom:8px}
+  #pg-draw .pp-tier{font-size:clamp(22px,2.2vw,34px);margin-top:10px}
+  #pg-draw .pp-name{font-size:clamp(20px,1.9vw,30px)}
+  #pg-draw .pp-img{max-height:36vh}
+  #pg-draw .pp-prog{font-size:16px}
 }
 /* 가운데 메인 영역을 더 크게 */
 .cg{width:100%;text-align:center;animation:tick .5s both;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(14px,3vh,34px);padding:clamp(10px,2vh,24px) 0}
-.cg-t{color:var(--gold2);font-size:min(var(--tsz,40px),11vw);line-height:1.45;padding:.08em 0 .14em;max-width:100%;text-shadow:0 0 26px rgba(246,196,83,.45)}
+.cg-t{color:var(--gold2);font-size:var(--tsz,40px);line-height:1.45;padding:.08em 0 .14em;max-width:100%;text-shadow:0 0 26px rgba(246,196,83,.45)}
 .cg-s{margin:6px 0 14px;color:var(--mute);font-weight:800;font-size:clamp(18px,1.8vw,28px)}
 .cg-tier{margin:0;width:100%}
 .cg-n{color:var(--gold);font-weight:800;font-size:clamp(16px,1.5vw,24px);margin-bottom:4px}
@@ -1075,14 +1085,12 @@ function renderStage(){
 /* 화면 높이에 맞춰 제목 글자·여백·추첨 영역을 줄여서 아래 추첨 단추까지 한 화면에 보이게 함 */
 function fitStage(){
   const pg=$('#pg-draw');if(!pg||!pg.classList.contains('on'))return;
-  const head=document.querySelector('.stage-head'),t=$('#stTitle'),st=document.querySelector('.stage'),ar=$('#arena');
+  const head=document.querySelector('.stage-head'),t=$('#stTitle'),ar=$('#arena'),st=ar.parentElement;
   const base=S.titleSize||40;let top=S.titleTop??36;
   ar.style.minHeight='';t.style.setProperty('--tsz',base+'px');head.style.setProperty('--ttop',top+'px');
   const over=()=>st.getBoundingClientRect().bottom+scrollY>innerHeight-16;
   if(!over())return;
   ar.style.minHeight='0';
-  let sz=base,n=0;
-  while(over()&&sz>22&&n++<60){sz=Math.max(22,sz-3);t.style.setProperty('--tsz',sz+'px')}
   if(over()){head.style.setProperty('--ttop','6px')}
   if(over()){ar.style.minHeight='0'}
 }
@@ -1103,7 +1111,7 @@ function chipsHTML(list,step=60,mul=1,fixCols=0,gold=false){
   const fs=Math.max(12,Math.floor(Math.min(cap,Math.floor((avail/cols-14)/(maxLen*0.98)))*mul));
   return`<div class="chipgrid2" style="grid-template-columns:repeat(${cols},minmax(0,1fr));font-size:${fs}px">`+list.map((w,i)=>`<div class="big-chip2${gold?' gold':''}" style="animation-delay:${i*step}ms">${esc(w.name)}${w.sub?`<small>${esc(w.sub)}</small>`:''}</div>`).join('')+`</div>`}
 const srcKey=q=>q&&q.src==='tables'?'tables':'people';
-let congrat=null;
+let congrat=null,atHome=false;
 const isCatLast=p=>{const i=S.prizes.indexOf(p),n=S.prizes[i+1];return !n||srcKey(n)!==srcKey(p)};
 const catTiers=p=>S.prizes.filter(q=>srcKey(q)===srcKey(p));
 const congKey=p=>srcKey(p)==='tables'?'tables':'t:'+p.id;
@@ -1112,12 +1120,13 @@ const nextTier=()=>S.prizes.findIndex((q,i)=>i>S.cur&&remain(q)>0);
 function congratHTML(p){
   const k=srcKey(p),tiers=k==='tables'?S.prizes.filter(q=>srcKey(q)===k&&wonOf(q).length):[p];
   const tf=fontStack(S.titleFont).replace(/"/g,"'"),fw=S.titleBold?700:400;
-  return `<div class="cg"><div class="cg-t" style="font-family:${tf};font-weight:${fw};font-size:min(${Math.round((S.titleSize||40)*.8)}px,6.2vw)">🎉 Congratulations 🎊</div>`+
+  return `<div class="cg"><div class="cg-t" style="font-family:${tf};font-weight:${fw};font-size:${Math.round((S.titleSize||40)*.8)}px">🎉 Congratulations 🎊</div>`+
     tiers.map(q=>{const w=orderedWinners(q);return `<div class="cg-tier">${chipsHTML(w,70,.66,0,true)}</div>`}).join('')+`</div>`;
 }
 function renderIdle(){
   const p=curPrize();$('#btnOpenAll').style.display='none';
   const r=remain(p);
+  if(atHome){$('#arena').innerHTML='<div class="cg"><div class="hint" style="line-height:1.6">🎉 모든 추첨이 끝났어요<br><small style="color:var(--mute)">결과는 위쪽 [결과] 탭에서 확인하고 엑셀로 받을 수 있어요<br>다시 추첨하려면 위쪽 [리셋 · 다시 추첨]을 눌러 주세요</small></div></div>';return}
   if(congrat===congKey(p)&&r===0){$('#arena').innerHTML=congratHTML(p);return}
   if(r===0&&wonOf(p).length){
     $('#arena').innerHTML=`<div class="grp">`+p.products.map(x=>{const l=wonOfProd(p,x);if(!l.length)return'';
@@ -1147,14 +1156,14 @@ $('#wlist').addEventListener('click',e=>{
 if($('#btnUndo'))$('#btnUndo').onclick=()=>{if(busy)return;const p=curPrize(),l=wonOf(p);if(!l.length)return toast('취소할 당첨이 없어요');l.pop();save();renderStage();toast('마지막 당첨을 취소했어요')};
 function updateButton(){
   const p=curPrize(),r=remain(p),b=$('#btnDraw');
-  if(r===0){const last=nextTier()<0;b.textContent=last?'결과 보기':'다음 추첨'}
+  if(r===0){const last=nextTier()<0;b.textContent=last?'확인':'다음 추첨'}
   else{const x=activeProd(p),rx=remainProd(p,x);
     b.textContent=p.multi?`${Math.min(rx,pool(p).length||rx)}명 한 번에 뽑기`:'추첨 시작'}
-  b.disabled=busy;b.style.opacity=busy?.5:1;
+  b.disabled=busy;b.style.opacity=busy?.5:1;b.style.display=atHome?'none':'';
 }
 $('#btnDraw').onclick=async()=>{
   if(busy)return;const p=curPrize(),r=remain(p);
-  if(r===0){if(needCongrat(p)){congrat=congKey(p);return renderStage()}congrat=null;const nx=nextTier();if(nx<0){autoSaveFinal();return showTab('res')}S.cur=nx;save();renderStage();if(remain(curPrize())>0)return $('#btnDraw').onclick();return}
+  if(r===0){if(needCongrat(p)){congrat=congKey(p);return renderStage()}congrat=null;const nx=nextTier();if(nx<0){autoSaveFinal();atHome=true;S.cur=0;congrat=null;save();return renderStage()}S.cur=nx;save();renderStage();if(remain(curPrize())>0)return $('#btnDraw').onclick();return}
   const x=activeProd(p),rx=remainProd(p,x),pl=pool(p);
   if(!pl.length)return toast('뽑을 수 있는 참가자가 없어요');
   const k=Math.min(p.multi?rx:1,pl.length),win=sample(pl,k);
@@ -1497,9 +1506,9 @@ $('#btnCopy').onclick=async()=>{const rows=resultRows();if(rows.length<2)return 
   try{await navigator.clipboard.writeText(t);toast('복사했어요. 엑셀에 붙여넣기 하세요')}catch(e){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();toast('복사했어요. 엑셀에 붙여넣기 하세요')}};
 $('#btnPrint').onclick=()=>print();
 $('#btnRedo').onclick=()=>{if(busy)return toast('추첨이 끝난 뒤에 눌러 주세요');
-  if(!winnerCount()){S.winners={};S.absent=[];S.cur=0;S.pcur={};save();renderStage();return toast('처음 상태예요. 추첨 시작을 눌러 주세요')}
+  if(!winnerCount()){atHome=false;S.winners={};S.absent=[];S.cur=0;S.pcur={};save();renderStage();return toast('처음 상태예요. 추첨 시작을 눌러 주세요')}
   if(!confirm('당첨 기록과 불참 처리를 모두 지우고 처음(첫 번째 등수)부터 다시 추첨할까요?'+String.fromCharCode(10)+String.fromCharCode(10)+'(명단·상품 설정은 그대로이고, 지우기 전의 결과는 보관함에 자동 보관돼요)'))return;
-  archiveCurrent('다시 추첨(리셋)');S.winners={};S.absent=[];S.cur=0;S.pcur={};save();renderStage();toast('리셋했어요. 처음부터 다시 추첨할 수 있어요')};
+  atHome=false;archiveCurrent('다시 추첨(리셋)');S.winners={};S.absent=[];S.cur=0;S.pcur={};save();renderStage();toast('리셋했어요. 처음부터 다시 추첨할 수 있어요')};
 $('#btnResetWin').onclick=()=>{if(confirm('모든 당첨 기록과 불참 처리를 초기화할까요? (명단·상품 설정은 유지, 지우기 전에 보관함에 자동 보관돼요)')){archiveCurrent('기록 초기화');S.winners={};S.absent=[];S.cur=0;S.pcur={};save();renderResults()}};
 $('#btnResetAll').onclick=()=>{if(confirm('명단, 상품, 당첨 기록을 모두 지우고 처음 상태로 되돌릴까요? (당첨 기록은 지우기 전에 보관함에 자동 보관돼요)')){archiveCurrent('전체 초기화');{const ev=S.event;S=defaults();if(ev)S.event=ev}save();renderSetup();renderResults();showTab('set')}};
 
