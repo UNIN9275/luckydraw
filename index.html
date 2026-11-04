@@ -1169,7 +1169,7 @@ function updateButton(){
 }
 $('#btnDraw').onclick=async()=>{
   if(busy)return;const p=curPrize(),r=remain(p);
-  if(r===0){if(needCongrat(p)){congrat=congKey(p);return renderStage()}congrat=null;const nx=nextTier();if(nx<0){autoSaveFinal();atHome=true;S.cur=0;congrat=null;save();return renderStage()}S.cur=nx;save();renderStage();if(remain(curPrize())>0)return $('#btnDraw').onclick();return}
+  if(r===0){if(needCongrat(p)){congrat=congKey(p);return renderStage()}congrat=null;const nx=nextTier();if(nx<0){return showTab('res')}S.cur=nx;save();renderStage();if(remain(curPrize())>0)return $('#btnDraw').onclick();return}
   const x=activeProd(p),rx=remainProd(p,x),pl=pool(p);
   if(!pl.length)return toast('뽑을 수 있는 참가자가 없어요');
   const k=Math.min(p.multi?rx:1,pl.length),win=sample(pl,k);
