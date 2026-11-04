@@ -307,7 +307,7 @@ let remoteEv=null;
 async function pull(){try{if(!/^https?:/.test(location.protocol))return;const r=await fetch('event.json?'+Date.now(),{cache:'no-store'});if(r.ok){const j=await r.json();remoteEv=(j&&j.h&&j.salt&&j.start&&j.end)?j:null}}catch(e){}}
 const curEv=()=>{const l=readEv();if(!remoteEv)return l;return Object.assign({},remoteEv,{closed:!!(remoteEv.closed||(l&&l.id===remoteEv.id&&l.closed))})};
 const evState=ev=>{if(!ev||!ev.h)return'none';if(ev.closed)return'ended';const t=today();return t<ev.start?'before':t>ev.end?'ended':'ok'};
-window.LDAuth={pbk,today,evState,readEv,curEv,pull,END,role:null,pw:null,remote:()=>remoteEv};
+window.LDAuth={pbk,today,evState,readEv,curEv,pull,END,role:null,pw:null,remote:()=>remoteEv,logout:()=>{try{sessionStorage.removeItem('ld_s');sessionStorage.removeItem('ld_msg')}catch(e){}location.reload()}};
 function enter(role,token){window.LDAuth.role=role;document.body.classList.add('role-'+role);try{sessionStorage.setItem('ld_s',JSON.stringify({r:role,t:token}))}catch(e){}g.remove();setTimeout(()=>dispatchEvent(new Event('ld-login')),0)}
 function lock(msg){try{sessionStorage.removeItem('ld_s');if(msg)sessionStorage.setItem('ld_msg',msg)}catch(e){}location.reload()}
 setInterval(async()=>{if(window.LDAuth.role!=='event')return;await pull();if(evState(curEv())!=='ok')lock(END)},30000);
@@ -347,6 +347,8 @@ f.addEventListener('submit',async e=>{e.preventDefault();er.textContent='';const
   <button class="ico" id="btnOnsite" title="현장에서 티켓을 판매한 참가자를 바로 등록해요 (단축키 R)">현장 등록</button>
   <button class="ico" id="btnSound" title="효과음 켜기/끄기">소리 켜짐</button>
   <button class="ico" id="btnFull" title="전체 화면 (F)">전체화면</button>
+  <span id="roleTag" style="color:var(--gold2);font-weight:700;font-size:14px;white-space:nowrap"></span>
+  <button class="ico" id="btnLogout" title="로그아웃">로그아웃</button>
 </div>
 
 <!-- ① 설정 -->
@@ -1382,6 +1384,9 @@ async function cloudLoad(auto){
     if(Array.isArray(d.hist))saveHist(d.hist);
     savedDlg(true,'설정값을 불러왔어요',['잠시 후 화면을 새로 고칩니다.']);setTimeout(()=>location.reload(),900)
   }catch(e){if(!auto)savedDlg(false,'불러오지 못했어요',[esc(e.message||String(e))])}}
+function renderRole(){const r=window.LDAuth&&LDAuth.role;$('#roleTag').textContent=r==='admin'?'🔑 슈퍼 어드민':r==='event'?'👤 관리자':''}
+$('#btnLogout').onclick=()=>{if(busy)return toast('추첨 중에는 로그아웃할 수 없어요');if(!confirm('로그아웃할까요?'))return;LDAuth.logout()};
+addEventListener('ld-login',renderRole);renderRole();
 $('#btnUp').onclick=cloudUpload;
 $('#btnDown').onclick=()=>cloudLoad(false);
 addEventListener('ld-login',()=>{renderTok();
