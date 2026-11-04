@@ -1115,7 +1115,7 @@ function chipsHTML(list,step=60,mul=1,fixCols=0,gold=false,spin=false,nv=0){
   const cap=n<=1?120:n<=2?96:n<=4?72:n<=8?48:32; // 당첨자가 적을수록 글씨를 크게
   const fs=Math.max(12,Math.floor(Math.min(cap,Math.floor((avail/cols-14)/(maxLen*0.98)))*mul));
   const gtc=list.length<cols?`repeat(${list.length},calc((100% - ${(cols-1)*10}px)/${cols}))`:`repeat(${cols},minmax(0,1fr))`;
-  return`<div class="chipgrid2" style="grid-template-columns:${gtc};justify-content:center;font-size:${fs}px">`+list.map((w,i)=>`<div class="big-chip2${gold?' gold':''}" style="animation-delay:${i*step}ms">${spin?`<span class="cn" id="s${i}">?</span><small id="u${i}">&nbsp;</small>`:esc(w.name)+(w.sub?`<small>${esc(w.sub)}</small>`:'')}</div>`).join('')+`</div>`}
+  return`<div class="chipgrid2" style="grid-template-columns:${gtc};justify-content:center;font-size:${fs}px">`+list.map((w,i)=>`<div class="big-chip2${gold?' gold':''}" style="animation-delay:${i*step}ms">${spin?`<span class="cn" id="s${i}">?</span><small id="u${i}"${list.some(x=>x.sub)?'':' style="display:none"'}>&nbsp;</small>`:esc(w.name)+(w.sub?`<small>${esc(w.sub)}</small>`:'')}</div>`).join('')+`</div>`}
 const srcKey=q=>q&&q.src==='tables'?'tables':'people';
 let congrat=null,atHome=false;
 const isCatLast=p=>{const i=S.prizes.indexOf(p),n=S.prizes[i+1];return !n||srcKey(n)!==srcKey(p)};
@@ -1200,7 +1200,7 @@ function spinSlot(i,w,pl,total){
       const fin=t+delay>=total;          // 다음 이름 바뀜이 끝 시각을 넘으면, 지금 보이는 이름이 마지막 = 당첨자 (이후 더 바뀌지 않음)
       let p=w;
       if(!fin){let guard=0;do{p=pl[rnd(pl.length)]}while(pl.length>1&&(p.id===w.id||p.name===last)&&guard++<12)}  // 도는 중에는 당첨자 이름이 마지막 직전에 미리 나오지 않게
-      last=p.name;n.textContent=p.name;u.textContent=p.sub||' ';
+      last=p.name;n.textContent=p.name;if(u.style.display!=='none')u.textContent=p.sub||' ';
       n.classList.remove('tick');void n.offsetWidth;n.classList.add('tick');
       if(fin){box.classList.add('win');sfx('win');const r=box.getBoundingClientRect();confetti(r.left+r.width/2,r.top+r.height/2,pl.length>1?90:60);res();return}
       sfx('tick');setTimeout(tick,delay);
