@@ -834,7 +834,7 @@ function renderSetup(){
       <input type="text" data-pf="name" value="${esc(x.name)}" placeholder="상품 이름 (예: 냉장고)">
       <input type="number" data-pf="qty" min="1" value="${x.qty}" title="이 상품의 개수 = 당첨자 수"><span class="lbl">개</span>
       <button class="btn sm bad" data-delprod="${x.id}" title="상품 삭제">삭제</button></div>`).join('')}</div>
-    <div class="row" style="justify-content:space-between;margin-top:6px"><button class="btn sm" data-addprod="${p.id}">＋ 상품 추가</button><button class="btn sm bad" data-delp="${p.id}">${isT?'테이블 추첨 삭제':'삭제'}</button></div></div>`};
+    <div class="row" style="justify-content:space-between;margin-top:6px"><button class="btn sm" data-addprod="${p.id}">＋ 상품 추가</button><span class="note" style="margin:0 auto 0 10px;align-self:center;color:var(--gold2)">🖼 상품 이미지는 600px(가로·세로 중 긴 쪽)로 올려 주세요</span><button class="btn sm bad" data-delp="${p.id}">${isT?'테이블 추첨 삭제':'삭제'}</button></div></div>`};
   $('#plist').innerHTML=PL.map(p=>tierHTML(p,false)).join('');
   $('#tprize').innerHTML=S.prizes.filter(q=>q.src==='tables').map(p=>tierHTML(p,true)).join('');
   renderTables();osgDone();renderSaveInfo();rgExample();
@@ -946,7 +946,7 @@ const plClick=e=>{
     let j=i+st;while(j>=0&&j<S.prizes.length&&isTb(S.prizes[j])!==isTb(S.prizes[i]))j+=st;
     if(i<0||j<0||j>=S.prizes.length)return;[S.prizes[i],S.prizes[j]]=[S.prizes[j],S.prizes[i]];S.cur=0;save();renderSetup()}
   else if(d.delp){const dp=S.prizes.find(x=>x.id===d.delp);if(dp&&dp.src!=='tables'&&S.prizes.filter(x=>x.src!=='tables').length<=1)return toast('참가자 추첨 등수가 최소 1개는 있어야 해요');S.prizes=S.prizes.filter(p=>p.id!==d.delp);delete S.winners[d.delp];S.cur=Math.min(S.cur,S.prizes.length-1);save();renderSetup()}
-  else if(d.addprod){const p=S.prizes.find(x=>x.id===d.addprod);p.products.push(newProd());save();renderSetup();toast('🖼 상품 이미지는 600px(가로·세로 중 긴 쪽)로 올려 주세요',6000)}
+  else if(d.addprod){const p=S.prizes.find(x=>x.id===d.addprod);p.products.push(newProd());save();renderSetup()}
   else if(d.delprod){const t=findProd(d.delprod);if(!t)return;if(t.p.products.length<=1)return toast('등수마다 상품이 최소 1개는 있어야 해요');
     t.p.products=t.p.products.filter(q=>q.id!==d.delprod);S.winners[t.p.id]=wonOf(t.p).filter(w=>w.pid!==d.delprod);save();renderSetup()}
   else if(d.pimg){imgTarget=d.pimg;toast('🖼 상품 이미지는 600px(가로·세로 중 긴 쪽)로 올려 주세요',6000);$('#imgIn').click()}
