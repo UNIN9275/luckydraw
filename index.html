@@ -207,13 +207,13 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--gold)}
 /* 추첨 화면: 왼쪽 상품 칸·오른쪽 당첨자 칸을 왼쪽으로 모으고 글씨를 키움 */
 @media(min-width:1101px){
   #pg-draw.page{max-width:none;padding-left:20px;padding-right:20px}
-  #pg-draw.on{display:grid;grid-template-columns:300px minmax(0,1fr) minmax(340px,max-content);column-gap:22px;align-items:start;padding-top:10px}
+  #pg-draw.on{display:grid;grid-template-columns:300px minmax(0,1fr) minmax(340px,max-content);column-gap:22px;grid-template-rows:auto auto minmax(0,1fr);align-items:start;padding-top:10px}
   #pg-draw .stage{display:contents}
   #pg-draw .stage-head{grid-column:2;grid-row:1}
   #pg-draw .prodbar{grid-column:2;grid-row:2}
-  #pg-draw .stage>div:nth-child(2){grid-column:2;grid-row:3}
+  #pg-draw .stage>div:nth-child(2){grid-column:2;grid-row:3;align-self:start}
   #pg-draw .prodpanel{grid-column:1;grid-row:1 / span 3;position:sticky;top:30px;padding:4px 0;margin-top:30px}
-  #pg-draw .side{grid-column:3;grid-row:1 / span 3;justify-self:end;margin-top:30px}
+  #pg-draw .side{grid-column:3;grid-row:1 / span 3;justify-self:end;margin-top:30px;position:sticky;top:30px;max-height:calc(100vh - 150px);overflow-y:auto;overflow-x:hidden;scrollbar-width:thin}
   #pg-draw .pp-cat{font-size:clamp(20px,1.9vw,30px);margin-bottom:8px}
   #pg-draw .pp-tier{font-size:clamp(22px,2.2vw,34px);margin-top:10px}
   #pg-draw .pp-name{font-size:clamp(20px,1.9vw,30px)}
@@ -1148,6 +1148,7 @@ function renderSide(){
     h+=l.length?l.map((w,i)=>`<div class="w"><span class="no">${i+1}</span><span class="nm">${esc(w.name)}<small>${esc([w.sub,w.prod?'🎁 '+w.prod:''].filter(Boolean).join(' · '))}</small></span><button class="btn sm bad" data-abs="${w.id}" data-pid="${q.id}" title="불참 처리 후 다시 뽑기">✕</button></div>`).join(''):'<span class="note">아직 없어요.</span>';
   });
   $('#wlist').innerHTML=h;
+  const sd=document.querySelector('.side');if(sd)sd.scrollTop=sd.scrollHeight;
 }
 $('#wlist').addEventListener('click',e=>{
   const id=e.target.dataset.abs;if(!id||busy)return;const p=S.prizes.find(q=>String(q.id)===e.target.dataset.pid)||curPrize();
