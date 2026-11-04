@@ -345,10 +345,10 @@ f.addEventListener('submit',async e=>{e.preventDefault();er.textContent='';const
 <div class="page on" id="pg-set">
   <div class="card adminonly" id="evCard" style="margin-bottom:18px">
     <h2 style="margin:0 0 6px">🔐 이벤트 사용 기간 · 비밀번호 <small style="color:var(--mute);font-weight:500">(관리자 전용)</small></h2>
-    <p class="note" style="margin:0 0 12px">설정한 사용 기간에만 이벤트 비밀번호로 로그인돼요. 기간이 지나면 이벤트 비밀번호는 막히고 관리자만 들어올 수 있어요. 날짜는 6자리(예: 261106)로 입력합니다.</p>
+    <p class="note" style="margin:0 0 12px">설정한 사용 기간에만 이벤트 비밀번호로 로그인돼요. 기간이 지나면 이벤트 비밀번호는 막히고 관리자만 들어올 수 있어요. 날짜는 달력에서 선택하세요.</p>
     <div class="row" style="gap:12px;flex-wrap:wrap;align-items:center">
-      <span class="lbl">사용 시작일</span><input id="evStart" inputmode="numeric" maxlength="6" placeholder="261106" style="width:120px">
-      <span class="lbl">종료일</span><input id="evEnd" inputmode="numeric" maxlength="6" placeholder="261107" style="width:120px">
+      <span class="lbl">사용 시작일</span><input id="evStart" type="date" style="width:165px;color-scheme:dark">
+      <span class="lbl">종료일</span><input id="evEnd" type="date" style="width:165px;color-scheme:dark">
       <span class="lbl">이벤트 비밀번호</span><input id="evPw" type="text" autocomplete="off" placeholder="변경할 때만 입력" style="width:210px">
       <button class="btn gold" id="evSave">이벤트 설정 저장</button>
       <button class="btn sm bad" id="evNew">🆕 새 이벤트 시작</button>
@@ -1267,10 +1267,11 @@ $('#histBody').addEventListener('click',e=>{
   if(d&&confirm('이 보관 기록을 삭제할까요?')){saveHist(loadHist().filter(q=>q.id!==d));renderHist()}});
 /* 이벤트 사용 기간·비밀번호 (관리자 전용) */
 function ymd(v){if(!/^\d{6}$/.test(v))return null;const y=2000+(+v.slice(0,2)),m=+v.slice(2,4),d=+v.slice(4,6),t=new Date(y,m-1,d);return t.getFullYear()===y&&t.getMonth()===m-1&&t.getDate()===d?t:null}
+const toIso=v=>v&&v.length===6?'20'+v.slice(0,2)+'-'+v.slice(2,4)+'-'+v.slice(4,6):'',toYmd=v=>v?v.slice(2,4)+v.slice(5,7)+v.slice(8,10):'';
 function renderEvCard(){
   const ev=S.event,st=window.LDAuth?LDAuth.evState(ev):'none';
-  if($('#evStart')&&document.activeElement!==$('#evStart'))$('#evStart').value=ev?ev.start:'';
-  if($('#evEnd')&&document.activeElement!==$('#evEnd'))$('#evEnd').value=ev?ev.end:'';
+  if($('#evStart')&&document.activeElement!==$('#evStart'))$('#evStart').value=ev?toIso(ev.start):'';
+  if($('#evEnd')&&document.activeElement!==$('#evEnd'))$('#evEnd').value=ev?toIso(ev.end):'';
   let m='이벤트가 아직 설정되지 않았어요. 지금은 관리자만 로그인할 수 있어요.';
   if(ev&&ev.h){const left=Math.round((ymd(ev.end)-ymd(LDAuth.today()))/86400000);
     m=st==='ok'?'✅ 사용 중 · '+ev.start+' ~ '+ev.end+' (종료까지 '+left+'일 남음) · 이벤트 비밀번호 설정됨'
@@ -1280,8 +1281,8 @@ function renderEvCard(){
 }
 $('#evSave').onclick=async()=>{
   if(window.LDAuth.role!=='admin')return;
-  const a=$('#evStart').value.trim(),b=$('#evEnd').value.trim(),pw=$('#evPw').value;
-  if(!ymd(a)||!ymd(b))return savedDlg(false,'날짜를 확인해 주세요',['사용 시작일·종료일을 6자리 숫자로 입력해 주세요. (예: 261106)']);
+  const a=toYmd($('#evStart').value),b=toYmd($('#evEnd').value),pw=$('#evPw').value;
+  if(!ymd(a)||!ymd(b))return savedDlg(false,'날짜를 확인해 주세요',['사용 시작일과 종료일을 달력에서 선택해 주세요.']);
   if(a>b)return savedDlg(false,'날짜를 확인해 주세요',['종료일이 시작일보다 빠를 수 없어요.']);
   let ev=S.event&&S.event.h?{...S.event}:null;
   if(pw){if(pw.length<4)return savedDlg(false,'비밀번호를 확인해 주세요',['이벤트 비밀번호는 4자 이상으로 입력해 주세요.']);
@@ -1295,6 +1296,7 @@ $('#evNew').onclick=()=>{
   if(!confirm('새 이벤트를 시작할까요?\n\n• 현재 이벤트의 당첨 결과는 "지난 이벤트 결과"에 보관돼요\n• 명단·상품·설정이 모두 비워지고\n• 현재 이벤트 비밀번호는 더 이상 쓸 수 없어요 (새로 설정해야 해요)'))return;
   archiveCurrent('새 이벤트 시작');S=defaults();save();
   savedDlg(true,'새 이벤트를 시작했어요',['이벤트 정보를 새로 설정해 주세요.']);setTimeout(()=>location.reload(),900)};
+$('#evStart').onchange=()=>{const a=$('#evStart').value,e=$('#evEnd');if(a&&(!e.value||e.value<a))e.value=a;e.min=a};
 addEventListener('ld-login',renderEvCard);renderEvCard();
 /* 설정 파일 내보내기 / 불러오기 (명단·상품·이미지·당첨 기록·지난 결과 포함, 다른 PC·노트북으로 옮길 때) */
 $('#btnExpCfg').onclick=()=>{
