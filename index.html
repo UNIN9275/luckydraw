@@ -344,7 +344,7 @@ f.addEventListener('submit',async e=>{e.preventDefault();er.textContent='';const
     <button class="tab" data-tab="res">결과</button>
   </div>
   <div class="sp"></div>
-  <button class="ico" id="btnOnsite" title="현장에서 티켓을 판매한 참가자를 바로 등록해요 (단축키 R)">현장 등록</button>
+  <button class="ico" id="btnXls" title="당첨 결과를 엑셀 파일로 다운로드해요">📥 결과 엑셀 다운로드</button>
   <button class="ico" id="btnSound" title="효과음 켜기/끄기">소리 켜짐</button>
   <button class="ico" id="btnFull" title="전체 화면 (F)">전체화면</button>
   <span id="roleTag" style="color:var(--gold2);font-weight:700;font-size:14px;white-space:nowrap"></span>
@@ -1017,7 +1017,7 @@ function showTab(t){
 $$('.tab').forEach(b=>b.onclick=()=>{if(busy)return toast('추첨이 끝난 뒤에 이동할 수 있어요');showTab(b.dataset.tab)});
 function toggleFull(){if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen?.().catch(()=>toast('이 화면에서는 전체화면을 쓸 수 없어요'))}
 $('#btnFull').onclick=toggleFull;
-$('#btnOnsite').onclick=osOpen;$('#osClose').onclick=osClose;$('#osAdd').onclick=osAdd;$('#osCsv').onclick=savePeopleCsv;
+$('#btnXls').onclick=()=>$('#btnCsv').onclick();$('#osClose').onclick=osClose;$('#osAdd').onclick=osAdd;$('#osCsv').onclick=savePeopleCsv;
 $('#onsite').addEventListener('mousedown',e=>{if(e.target.id==='onsite')osClose()});
 ['#osName','#osSub'].forEach(q=>$(q).addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();osAdd()}else if(e.key==='Escape')osClose()}));
 document.addEventListener('fullscreenchange',()=>{document.body.classList.toggle('fs',!!document.fullscreenElement);document.body.classList.remove('showbar')});
