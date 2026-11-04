@@ -1298,6 +1298,10 @@ const EVLOG='luckydraw_evlog';
 const loadEvLog=()=>{try{return JSON.parse(localStorage.getItem(EVLOG)||'[]')}catch(e){return[]}};
 const saveEvLog=l=>{try{localStorage.setItem(EVLOG,JSON.stringify(l))}catch(e){}};
 function evLogUpsert(patch){if(!S.event||!S.event.id)return;const L=loadEvLog();let e=L.find(x=>x.id===S.event.id);if(!e){e={id:S.event.id,createdAt:S.event.createdAt||Date.now()};L.unshift(e)}Object.assign(e,{name:S.event.name||'',client:S.event.client||'',start:S.event.start,end:S.event.end,cfg:snapCfg()},patch||{});saveEvLog(L)}
+const UPSIG='luckydraw_upsig';
+function cfgSig(){try{const c=snapCfg();if(!c)return'';delete c.savedAt;const t=JSON.stringify(c);let h=5381;for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return t.length+':'+h}catch(e){return''}}
+const markUploaded=()=>{try{localStorage.setItem(UPSIG,(S.event&&S.event.id||'')+'|'+cfgSig())}catch(e){}};
+const notUploaded=()=>{if(!S.event||!S.event.id)return false;try{return localStorage.getItem(UPSIG)!==(S.event.id+'|'+cfgSig())}catch(e){return false}};
 function snapCfg(){try{const c=JSON.parse(JSON.stringify(S));['event','winners','absent','cur','pcur','evDraft'].forEach(k=>delete c[k]);return c}catch(e){return null}}
 const fmtYmd=v=>v&&v.length===6?'20'+v.slice(0,2)+'-'+v.slice(2,4)+'-'+v.slice(4,6):'';
 const dayDiff=(a,b)=>Math.round((b-a)/86400000);
@@ -1424,7 +1428,7 @@ async function cloudUpload(){
     const blob=await encObj({state:S,hist:loadHist(),at:Date.now()},pw);
     if(blob.length>45*1024*1024)throw new Error('설정 크기가 너무 커요. 상품 이미지를 줄여 주세요.');
     await ghPut(GH.pre+'config.enc',blob,'설정값 업로드');
-    await pushEvent();
+    await pushEvent();markUploaded();
     savedDlg(true,'설정값을 업로드했어요',['설정·명단은 이벤트 비밀번호로 암호화되어 GitHub에 올라갔어요.','직원은 이벤트 비밀번호로 로그인하면 이 설정값을 불러올 수 있어요.','크기: '+(blob.length/1048576).toFixed(2)+'MB'])
   }catch(e){savedDlg(false,'업로드하지 못했어요',[esc(e.message||String(e))])}
   finally{b.disabled=false;b.textContent=t0}}
@@ -1446,7 +1450,7 @@ async function cloudLoad(auto){
     savedDlg(true,'설정값을 불러왔어요',['잠시 후 화면을 새로 고칩니다.']);setTimeout(()=>location.reload(),900)
   }catch(e){if(!auto)savedDlg(false,'불러오지 못했어요',[esc(e.message||String(e))])}}
 function renderRole(){const r=window.LDAuth&&LDAuth.role;$('#roleTag').textContent=r==='admin'?'🔑 슈퍼 어드민':r==='event'?'👤 사용자':''}
-$('#btnLogout').onclick=()=>{if(busy)return toast('추첨 중에는 로그아웃할 수 없어요');if(!confirm('로그아웃할까요?'))return;LDAuth.logout()};
+$('#btnLogout').onclick=()=>{if(busy)return toast('추첨 중에는 로그아웃할 수 없어요');if(window.LDAuth.role==='admin'&&notUploaded()){if(!confirm('⚠ 서버에 업로드하지 않은 설정 변경이 있어요.\n\n지금 로그아웃하면 직원 PC에는 이전 설정이 그대로 남아 있어요.\n(취소를 누르고 [설정값 서버에 업로드 및 현장노트북으로 보내기]를 먼저 누르세요)\n\n그래도 로그아웃할까요?'))return}else if(!confirm('로그아웃할까요?'))return;LDAuth.logout()};
 addEventListener('ld-login',renderRole);renderRole();
 $('#btnUp').onclick=cloudUpload;
 $('#btnDown').onclick=()=>cloudLoad(false);
