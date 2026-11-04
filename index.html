@@ -1352,8 +1352,10 @@ async function cloudUpload(){
   if(window.LDAuth.role!=='admin')return;
   if(!S.event||!S.event.h||!S.event.id)return savedDlg(false,'이벤트를 먼저 설정해 주세요',['이벤트 카드에서 날짜와 비밀번호를 입력하고 [이벤트 설정 저장]을 먼저 눌러 주세요.']);
   if(!ghTok())return savedDlg(false,'GitHub 접근 키가 필요해요',['이벤트 카드 아래 "GitHub 접근 키"에 키를 입력하고 [키 저장·확인]을 눌러 주세요.']);
-  const pw=$('#evPw').value;
-  if(!pw)return savedDlg(false,'이벤트 비밀번호를 입력해 주세요',['위 이벤트 카드의 "이벤트 비밀번호" 칸에 비밀번호를 넣고 다시 눌러 주세요.','설정값은 이 비밀번호로 암호화되어 올라갑니다.']);
+  let pw=$('#evPw').value;
+  if(!pw)pw=prompt('이벤트 비밀번호를 입력하세요
+(설정값이 이 비밀번호로 암호화되어 올라갑니다)')||'';
+  if(!pw)return
   if(await LDAuth.pbk(pw,S.event.salt)!==S.event.h)return savedDlg(false,'비밀번호가 달라요',['입력한 비밀번호가 저장된 이벤트 비밀번호와 달라요.']);
   const b=$('#btnUp'),t0=b.textContent;b.disabled=true;b.textContent='업로드 중…';
   try{
