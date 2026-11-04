@@ -1322,7 +1322,7 @@ function renderEvCard(){
   const ev=S.event,st=window.LDAuth?LDAuth.evState(ev):'none';
   if($('#evName')&&document.activeElement!==$('#evName'))$('#evName').value=ev&&ev.name||(S.evDraft&&S.evDraft.name)||'';
   if($('#evClient')&&document.activeElement!==$('#evClient'))$('#evClient').value=ev&&ev.client||(S.evDraft&&S.evDraft.client)||'';
-  if(window.LDAuth&&LDAuth.role==='admin'&&ev&&ev.id&&!loadEvLog().some(x=>x.id===ev.id))evLogUpsert();
+  if(window.LDAuth&&LDAuth.role==='admin'&&ev&&ev.id&&!loadEvLog().some(x=>x.id===ev.id&&x.cfg))evLogUpsert();
   setTimeout(renderEvLog,0);
   if($('#evStart')&&document.activeElement!==$('#evStart'))$('#evStart').value=ev?toIso(ev.start):'';
   if($('#evEnd')&&document.activeElement!==$('#evEnd'))$('#evEnd').value=ev?toIso(ev.end):'';
