@@ -1341,7 +1341,7 @@ function ghErr(r,what){if(r.status===401)return new Error('GitHub 접근 키가 
 async function ghGetSha(path,tok){const r=await fetch('https://api.github.com/repos/'+GH.repo+'/contents/'+path,{headers:ghHdr(tok),cache:'no-store'});if(r.status===404)return null;if(!r.ok)throw ghErr(r,'확인');return (await r.json()).sha}
 async function ghPut(path,text,msg){const tok=ghTok();if(!tok)throw new Error('GitHub 접근 키를 먼저 저장해 주세요');const sha=await ghGetSha(path,tok),body={message:msg,content:b64(new TextEncoder().encode(text))};if(sha)body.sha=sha;const r=await fetch('https://api.github.com/repos/'+GH.repo+'/contents/'+path,{method:'PUT',headers:Object.assign({'Content-Type':'application/json'},ghHdr(tok)),body:JSON.stringify(body)});if(!r.ok)throw ghErr(r,'업로드')}
 async function ghRaw(path){const r=await fetch('https://api.github.com/repos/'+GH.repo+'/contents/'+path+'?t='+Date.now(),{headers:{Accept:'application/vnd.github.raw'},cache:'no-store'});if(r.status===404)return null;if(!r.ok)throw ghErr(r,'읽기');return r.text()}
-const evPub=()=>JSON.stringify({id:S.event.id,start:S.event.start,end:S.event.end,salt:S.event.salt,h:S.event.h,closed:!!S.event.closed});
+const evPub=()=>JSON.stringify({id:S.event.id,start:S.event.start,end:S.event.end,salt:S.event.salt,h:S.event.h,closed:!!S.event.closed,ver:S.event.ver||0});
 const pushEvent=()=>ghPut(GH.pre+'event.json',evPub(),'이벤트 정보 갱신');
 function renderTok(){const t=ghTok();if($('#ghTokInfo'))$('#ghTokInfo').textContent=t?'🔑 접근 키가 저장되어 있어요 (…'+t.slice(-4)+')':'접근 키가 없어요. 설정값 업로드·원격 종료에 필요해요.'}
 $('#ghTokSave').onclick=async()=>{
@@ -1362,6 +1362,7 @@ async function cloudUpload(){
   if(await LDAuth.pbk(pw,S.event.salt)!==S.event.h)return savedDlg(false,'비밀번호가 달라요',['입력한 비밀번호가 저장된 이벤트 비밀번호와 달라요.']);
   const b=$('#btnUp'),t0=b.textContent;b.disabled=true;b.textContent='업로드 중…';
   try{
+    S.event.ver=Date.now();save();
     const blob=await encObj({state:S,hist:loadHist(),at:Date.now()},pw);
     if(blob.length>45*1024*1024)throw new Error('설정 크기가 너무 커요. 상품 이미지를 줄여 주세요.');
     await ghPut(GH.pre+'config.enc',blob,'설정값 업로드');
@@ -1381,7 +1382,7 @@ async function cloudLoad(auto){
     if(!auto&&!confirm('GitHub의 설정값으로 현재 설정을 덮어쓸까요? (명단·상품·당첨 기록이 바뀝니다. 현재 내용은 사라져요)'))return;
     let rev=null;try{rev=JSON.parse(await ghRaw(GH.pre+'event.json'))}catch(e){}
     S=migrate(Object.assign(defaults(),d.state));
-    if(rev&&rev.h)S.event={start:rev.start,end:rev.end,salt:rev.salt,h:rev.h,id:rev.id,closed:!!rev.closed};
+    if(rev&&rev.h)S.event={start:rev.start,end:rev.end,salt:rev.salt,h:rev.h,id:rev.id,closed:!!rev.closed,ver:rev.ver||0};
     if(!save())throw new Error('저장 공간이 부족해요');
     if(Array.isArray(d.hist))saveHist(d.hist);
     savedDlg(true,'설정값을 불러왔어요',['잠시 후 화면을 새로 고칩니다.']);setTimeout(()=>location.reload(),900)
@@ -1392,7 +1393,8 @@ addEventListener('ld-login',renderRole);renderRole();
 $('#btnUp').onclick=cloudUpload;
 $('#btnDown').onclick=()=>cloudLoad(false);
 addEventListener('ld-login',()=>{renderTok();
-  if(window.LDAuth.role==='event'&&window.LDAuth.pw){const r=window.LDAuth.remote&&window.LDAuth.remote();if(r&&(!S.event||S.event.id!==r.id))cloudLoad(true)}});
+  if(window.LDAuth.role==='event'&&window.LDAuth.pw){const r=window.LDAuth.remote&&window.LDAuth.remote();if(r){const stale=!S.event||S.event.id!==r.id||(r.ver&&S.event.ver!==r.ver);
+      if(stale){if(S.event&&S.event.id===r.id&&winnerCount()>0)toast('새 설정값이 올라왔지만, 현재 추첨 기록이 있어 자동으로 받지 않았어요. [설정값 서버에서 불러오기]로 받을 수 있어요(추첨 기록은 사라져요)');else cloudLoad(true)}}}});
 renderTok();
 /* 설정 파일 내보내기 / 불러오기 (명단·상품·이미지·당첨 기록·지난 결과 포함, 다른 PC·노트북으로 옮길 때) */
 $('#btnExpCfg').onclick=()=>{
