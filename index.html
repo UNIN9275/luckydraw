@@ -1457,7 +1457,7 @@ async function cloudLoad(auto){
     if(Array.isArray(d.hist))saveHist(d.hist);
     savedDlg(true,'설정값을 불러왔어요',['잠시 후 화면을 새로 고칩니다.']);setTimeout(()=>location.reload(),900)
   }catch(e){if(!auto)savedDlg(false,'불러오지 못했어요',[esc(e.message||String(e))])}}
-function renderRole(){const r=window.LDAuth&&LDAuth.role;$('#roleTag').textContent=r==='admin'?'🔑 슈퍼 어드민':r==='event'?'👤 사용자':''}
+function renderRole(){const r=window.LDAuth&&LDAuth.role;$('#roleTag').textContent=r==='admin'?'🔑 슈퍼 어드민':r==='event'?'👤 일반 관리자':''}
 $('#btnLogout').onclick=()=>{if(busy)return toast('추첨 중에는 로그아웃할 수 없어요');if(window.LDAuth.role==='admin'&&notUploaded()){if(!confirm('⚠ 서버에 업로드하지 않은 설정 변경이 있어요.\n\n지금 로그아웃하면 직원 PC에는 이전 설정이 그대로 남아 있어요.\n(취소를 누르고 [설정값 서버에 업로드 및 현장노트북으로 보내기]를 먼저 누르세요)\n\n그래도 로그아웃할까요?'))return}else if(!confirm('로그아웃할까요?'))return;LDAuth.logout()};
 addEventListener('ld-login',renderRole);renderRole();
 $('#btnUp').onclick=cloudUpload;
