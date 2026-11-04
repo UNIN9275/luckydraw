@@ -254,7 +254,7 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--gold)}
 body.role-admin .adminonly{display:block!important}
 body:not(.role-admin) #btnDown{grid-column:1 / -1}
 body.role-admin #btnDown{display:none}
-body.role-user .tab[data-tab=set],body.role-user #pg-set{display:none!important}
+body.role-user .tab[data-tab=set],body.role-user #pg-set,body.role-user #btnResetWin,body.role-user #btnResetAll{display:none!important}
 body.role-admin #btnUp{grid-column:1 / -1}
 .evt{width:100%;border-collapse:collapse;font-size:14px}
 .evt th,.evt td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
@@ -758,7 +758,7 @@ function osRender(){
   $('#osInfo').textContent=`전체 ${S.people.length}명 · 현장 등록 ${on.length}명`;
   $('#osRecent').innerHTML=on.length?'최근 현장 등록: '+on.slice(-8).reverse().map(p=>esc(p.name)+(p.sub?' ('+esc(p.sub)+')':'')).join(' · '):'아직 현장 등록한 사람이 없어요.';
 }
-function osOpen(){if(busy)return toast('추첨이 끝난 뒤에 열 수 있어요');$('#onsite').style.display='flex';osRender();setTimeout(()=>$('#osName').focus(),30)}
+function osOpen(){if(window.LDAuth&&LDAuth.role==='user')return;if(busy)return toast('추첨이 끝난 뒤에 열 수 있어요');$('#onsite').style.display='flex';osRender();setTimeout(()=>$('#osName').focus(),30)}
 function osClose(){$('#onsite').style.display='none';if($('#pg-set').classList.contains('on'))renderSetup();else if($('#pg-draw').classList.contains('on'))renderStage()}
 function osAdd(){
   const name=$('#osName').value.trim(),sub=$('#osSub').value.trim();
@@ -1467,10 +1467,10 @@ async function cloudLoad(auto){
     if(Array.isArray(d.hist))saveHist(d.hist);
     savedDlg(true,'설정값을 불러왔어요',['잠시 후 화면을 새로 고칩니다.']);setTimeout(()=>location.reload(),900)
   }catch(e){if(!auto)savedDlg(false,'불러오지 못했어요',[esc(e.message||String(e))])}}
-function renderRole(){const r=window.LDAuth&&LDAuth.role;$('#roleTag').textContent=r==='admin'?'🔑 슈퍼 어드민':r==='event'?'👤 일반 관리자':r==='user'?'🎯 사용자':''}
+function renderRole(){const r=window.LDAuth&&LDAuth.role;$('#roleTag').textContent=r==='admin'?'🔑 슈퍼 어드민':r==='event'?'👤 관리자':r==='user'?'🎯 사용자':''}
 $('#btnLogout').onclick=()=>{if(busy)return toast('추첨 중에는 로그아웃할 수 없어요');if(window.LDAuth.role==='admin'&&notUploaded()){if(!confirm('⚠ 서버에 업로드하지 않은 설정 변경이 있어요.\n\n지금 로그아웃하면 직원 PC에는 이전 설정이 그대로 남아 있어요.\n(취소를 누르고 [설정값 서버에 업로드 및 현장노트북으로 보내기]를 먼저 누르세요)\n\n그래도 로그아웃할까요?'))return}else if(!confirm('로그아웃할까요?'))return;LDAuth.logout()};
 addEventListener('ld-login',renderRole);renderRole();
-addEventListener('ld-login',()=>{if(window.LDAuth.role==='user'){showTab('draw');if(!S.prizes||!S.prizes.length||!S.people||!S.people.length)toast('설정이 없어요. 일반 관리자가 먼저 로그인해 설정을 받아 주세요',6000)}});
+addEventListener('ld-login',()=>{if(window.LDAuth.role==='user'){showTab('draw');if(!S.prizes||!S.prizes.length||!S.people||!S.people.length)toast('설정이 없어요. 관리자가 먼저 로그인해 설정을 받아 주세요',6000)}});
 $('#btnUp').onclick=cloudUpload;
 $('#btnDown').onclick=()=>cloudLoad(false);
 addEventListener('ld-login',()=>{renderTok();
