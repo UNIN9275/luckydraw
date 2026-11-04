@@ -1415,6 +1415,14 @@ function askUploadPw(){
     d.addEventListener('mousedown',e=>{if(e.target===d)done(null)});
     d.addEventListener('keydown',e=>{if(e.key==='Escape')done(null)});
   })}
+/* 업로드용 사본: 상품 이미지를 더 작게 줄여 GitHub 용량 절약 (이 PC의 원본 이미지는 그대로) */
+async function slimForUpload(){
+  const c=JSON.parse(JSON.stringify(S));
+  for(const p of c.prizes||[])for(const x of p.products||[]){
+    if(!x.img||x.img.length<=45000)continue;
+    try{const im=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=x.img});
+      const d=encodeImg(im,480,0.7);if(d.length<x.img.length)x.img=d}catch(e){}}
+  return c}
 async function cloudUpload(){
   if(window.LDAuth.role!=='admin')return;
   if(!S.event||!S.event.h||!S.event.id)return savedDlg(false,'이벤트를 먼저 설정해 주세요',['이벤트 카드에서 날짜와 비밀번호를 입력하고 [이벤트 설정 저장]을 먼저 눌러 주세요.']);
@@ -1425,7 +1433,7 @@ async function cloudUpload(){
   const b=$('#btnUp'),t0=b.textContent;b.disabled=true;b.textContent='업로드 중…';
   try{
     S.event.ver=Date.now();save();
-    const blob=await encObj({state:S,hist:loadHist(),at:Date.now()},pw);
+    const slim=await slimForUpload();const blob=await encObj({state:slim,hist:loadHist(),at:Date.now()},pw);
     if(blob.length>45*1024*1024)throw new Error('설정 크기가 너무 커요. 상품 이미지를 줄여 주세요.');
     await ghPut(GH.pre+'config.enc',blob,'설정값 업로드');
     await pushEvent();markUploaded();
