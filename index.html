@@ -355,7 +355,7 @@ f.addEventListener('submit',async e=>{e.preventDefault();er.textContent='';const
   await pull();
   const ev=curEv(),st=evState(ev);
   if(ev&&ev.h&&(await pbk(pw,ev.salt))===ev.h){
-   if(st==='ok'){window.LDAuth.pw=pw;enter('event',ev.h);return}
+   if(st==='ok'){window.LDAuth.pw=pw;window.LDAuth.fresh=true;enter('event',ev.h);return}
    if(st==='before')er.textContent='아직 사용 기간이 아니에요 (시작일 '+ev.start+')';else endMsg(END);
    i.value='';i.focus();return}
   fails++;er.textContent='비밀번호가 맞지 않아요';i.value='';i.focus();
@@ -1480,7 +1480,7 @@ async function cloudLoad(auto){
 function renderRole(){const r=window.LDAuth&&LDAuth.role;$('#roleTag').textContent=r==='admin'?'🔑 어드민(관리자)':r==='event'?'👤 사용자':''}
 $('#btnLogout').onclick=()=>{if(busy)return toast('추첨 중에는 로그아웃할 수 없어요');if(window.LDAuth.role==='admin'&&notUploaded()){if(!confirm('⚠ 서버에 업로드하지 않은 설정 변경이 있어요.\n\n지금 로그아웃하면 직원 PC에는 이전 설정이 그대로 남아 있어요.\n(취소를 누르고 [설정값 서버에 업로드 및 현장노트북으로 보내기]를 먼저 누르세요)\n\n그래도 로그아웃할까요?'))return}else if(!confirm('로그아웃할까요?'))return;LDAuth.logout()};
 addEventListener('ld-login',renderRole);renderRole();
-addEventListener('ld-login',()=>{if(window.LDAuth.role==='event'){showTab('draw');if(!S.prizes||!S.prizes.length||!S.people||!S.people.length)toast('설정이 아직 없어요. 잠시 후 자동으로 불러오거나, 어드민에게 설정 업로드를 요청해 주세요',6000)}});
+addEventListener('ld-login',()=>{if(window.LDAuth.role==='event'){if(window.LDAuth.fresh&&winnerCount()>0){archiveCurrent('새 로그인(처음 화면)');S.winners={};S.absent=[];S.cur=0;S.pcur={};save()}atHome=false;showTab('draw');if(!S.prizes||!S.prizes.length||!S.people||!S.people.length)toast('설정이 아직 없어요. 잠시 후 자동으로 불러오거나, 어드민에게 설정 업로드를 요청해 주세요',6000)}});
 $('#btnUp').onclick=cloudUpload;
 $('#btnDown').onclick=()=>cloudLoad(false);
 addEventListener('ld-login',()=>{renderTok();
