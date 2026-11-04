@@ -67,6 +67,10 @@ td input[type=text]{min-width:84px}
 .drop.over{border-color:var(--gold);color:var(--gold2)}
 .chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:6px;max-height:72vh;overflow:auto;padding:4px}
 .chip{display:grid;grid-template-columns:30px 5.2em minmax(0,1fr) 26px;align-items:center;gap:6px;background:#0e1b42;border:1px solid var(--line);border-radius:10px;padding:5px 8px;font-size:14px}
+.chip .pinck{width:16px;height:16px;margin:0;accent-color:#f6c453;cursor:pointer}
+#chips .chip{grid-template-columns:30px 20px 5.2em minmax(0,1fr) 26px}
+body:not(.role-admin) #chips .chip{grid-template-columns:30px 5.2em minmax(0,1fr) 26px}
+.chip.pinned{border-color:#f6c453;box-shadow:0 0 0 1px rgba(246,196,83,.5) inset}
 .chip em{font-style:normal;color:var(--mute);font-size:12px;text-align:right}
 .chip .nm{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chip i{font-style:normal;color:var(--mute);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -460,6 +464,7 @@ f.addEventListener('submit',async e=>{e.preventDefault();er.textContent='';const
         <button class="btn sm" id="btnSavePeople">명단 CSV 저장</button>
         <button class="btn sm bad" id="btnClearPeople">명단 모두 지우기</button>
       </div>
+      <div class="row adminonly" id="pinRowP" style="gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px"><span class="lbl">⭐ 꼭 당첨</span><select id="pinPrizeP" style="width:200px"></select><span class="note">아래 명단에서 이름 앞 ☑를 체크하면 여기서 고른 등수에 꼭 당첨돼요 (어드민 전용)</span></div>
       <div class="row" style="justify-content:space-between"><span class="lbl">등록된 참가자</span><span class="count" id="pcount">0명</span></div>
       <div class="chips" id="chips"></div>
     </div>
@@ -863,6 +868,7 @@ function renderPins(){
   dl.innerHTML=S.people.slice(0,3000).map(x=>'<option value="'+esc(lab(x))+'">').join('');
   const prs=S.prizes.filter(q=>q.src!=='tables'),cur=sel.value;
   sel.innerHTML=prs.map(q=>'<option value="'+esc(q.id)+'">'+esc(q.name)+'</option>').join('');if(cur&&prs.some(q=>q.id===cur))sel.value=cur;
+  const s2=$('#pinPrizeP');if(s2){const c2=s2.value;s2.innerHTML=sel.innerHTML;if(c2&&prs.some(q=>q.id===c2))s2.value=c2}
   const L=(S.pins||[]).filter(z=>S.people.some(x=>x.id===z.pid)&&S.prizes.some(q=>q.id===z.prizeId));
   body.innerHTML=L.length?L.map(z=>{const x=S.people.find(q=>q.id===z.pid),q=S.prizes.find(v=>v.id===z.prizeId);return '<div class="row" style="gap:10px;align-items:center;margin:4px 0"><span>⭐ <b>'+esc(lab(x))+'</b> → '+esc(q.name)+'</span><button class="btn sm bad" data-pindel="'+esc(z.pid)+'">삭제</button></div>'}).join(''):'<p class="note" style="margin:0">지정한 분이 없어요.</p>'}
 function renderSetup(){
@@ -871,7 +877,8 @@ function renderSetup(){
   renderPins();
   $('#pcount').textContent=S.people.length.toLocaleString()+'명';
   const MAX=800;
-  $('#chips').innerHTML=S.people.slice(0,MAX).map((p,i)=>`<div class="chip"><em>${i+1}</em><span class="nm" title="${esc(p.name)}">${esc(p.name)}</span><i title="${esc(p.sub)}">${esc(p.sub)}</i><b data-del="${p.id}" title="삭제">✕</b></div>`).join('')+(S.people.length>MAX?`<span class="note" style="padding:6px">… 외 ${S.people.length-MAX}명</span>`:'')||'<span class="note">아직 등록된 참가자가 없어요.</span>';
+  const pm=new Map((S.pins||[]).map(z=>[z.pid,z.prizeId])),pn=id=>{const q=S.prizes.find(v=>v.id===id);return q?q.name:''};
+  $('#chips').innerHTML=S.people.slice(0,MAX).map((p,i)=>`<div class="chip${pm.has(p.id)?' pinned':''}"><em>${i+1}</em><input type="checkbox" class="pinck adminonly" data-pinck="${p.id}"${pm.has(p.id)?' checked':''} title="${pm.has(p.id)?'꼭 당첨: '+esc(pn(pm.get(p.id))):'체크하면 꼭 당첨'}"><span class="nm" title="${esc(p.name)}">${esc(p.name)}</span><i title="${esc(p.sub)}">${esc(p.sub)}</i><b data-del="${p.id}" title="삭제">✕</b></div>`).join('')+(S.people.length>MAX?`<span class="note" style="padding:6px">… 외 ${S.people.length-MAX}명</span>`:'')||'<span class="note">아직 등록된 참가자가 없어요.</span>';
   const PL=S.prizes.filter(q=>q.src!=='tables');
   const tierHTML=(p,isT)=>{const ip=PL.indexOf(p);return `<div class="tier" data-id="${p.id}">
     <div class="thead">
@@ -984,6 +991,10 @@ $('#btnRange').onclick=()=>{
   const l=[];for(let n=a;n<=b;n++)l.push({id:uid(),name:pre+String(n).padStart(pad,'0'),sub:''});addPeople(l)};
 $('#btnSavePeople').onclick=()=>savePeopleCsv();
 $('#btnClearPeople').onclick=()=>{if(!S.people.length)return;if(confirm('등록된 참가자 '+S.people.length+'명을 모두 지울까요? (당첨 기록은 유지됩니다)')){S.people=[];save();renderSetup()}};
+$('#chips').addEventListener('change',e=>{const id=e.target.dataset&&e.target.dataset.pinck;if(!id||window.LDAuth.role!=='admin')return;
+  if(e.target.checked){const pz=$('#pinPrizeP').value;if(!pz){e.target.checked=false;return toast('먼저 등수를 선택해 주세요')}S.pins=(S.pins||[]).filter(z=>z.pid!==id);S.pins.push({pid:id,prizeId:pz})}
+  else S.pins=(S.pins||[]).filter(z=>z.pid!==id);
+  save();renderSetup()});
 $('#chips').addEventListener('click',e=>{const id=e.target.dataset.del;if(id){S.people=S.people.filter(p=>p.id!==id);save();renderSetup()}});
 const plInput=e=>{
   const tier=e.target.closest('.tier');if(!tier)return;const p=S.prizes.find(x=>x.id===tier.dataset.id);if(!p)return;
