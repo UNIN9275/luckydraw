@@ -509,6 +509,17 @@ f.addEventListener('submit',async e=>{e.preventDefault();er.textContent='';const
       <div class="note" id="saveInfo" style="margin-top:8px"></div>
     </div>
 
+    <div class="card adminonly" id="pinCard">
+      <h2 style="margin:0 0 6px">⭐ 지정 당첨 <small style="color:var(--mute);font-weight:500">(어드민(관리자) 전용 · 사용자 화면에는 보이지 않아요)</small></h2>
+      <p class="note" style="margin:0 0 12px">여기에 넣은 분은 선택한 등수 추첨에서 반드시 당첨돼요. 추첨 화면은 평소처럼 보이고, 당첨 순서는 그 등수 안에서 무작위로 섞여요. 불참 처리하면 당첨에서 빠져요.</p>
+      <div class="row" style="gap:10px;flex-wrap:wrap;align-items:center">
+        <input id="pinWho" list="pinList" autocomplete="off" placeholder="이름 입력 후 목록에서 선택" style="width:300px"><datalist id="pinList"></datalist>
+        <select id="pinPrize" style="width:200px"></select>
+        <button class="btn sm gold" id="pinAdd">＋ 지정</button>
+      </div>
+      <div id="pinBody" style="margin-top:12px"></div>
+    </div>
+
     <div class="card" id="cardT">
       <h2>테이블 번호 (테이블 추첨용)<button type="button" class="ordb ordw ordbtn" id="ordT" title="클릭하면 등수별 추첨과 순서가 바뀌어요"></button></h2>
       <div class="row"><span class="lbl">카테고리 제목</span><input id="catT" type="text" data-cat="tables" placeholder="예) 행운의 테이블" style="flex:1;min-width:160px;max-width:340px"><span class="note">추첨 화면 왼쪽 상품 칸 맨 위에 표시돼요</span></div>
@@ -623,6 +634,23 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(S));return true}catc
 
 /* ================= 난수 (암호학적 난수로 공정하게) ================= */
 function rnd(n){const a=new Uint32Array(1),lim=Math.floor(4294967296/n)*n;let x;do{crypto.getRandomValues(a);x=a[0]}while(x>=lim);return x%n}
+/* 지정 당첨: 이 등수에 지정된 분을 확률적으로 섞어서 반드시 마지막까지는 당첨시킴 */
+function pickWin(p,pl,k){
+  const all=S.pins||[];if(!all.length)return sample(pl,k);
+  const others=new Set(all.filter(z=>z.prizeId!==p.id).map(z=>z.pid));
+  const base=S.excludeWon?pl.filter(x=>!others.has(x.id)):pl;
+  const pinned=all.filter(z=>z.prizeId===p.id).map(z=>pl.find(x=>x.id===z.pid)).filter(Boolean);
+  if(!pinned.length)return sample(base.length>=k?base:pl,k);
+  let rest=base.filter(x=>!pinned.includes(x));
+  let rLeft=Math.max(remain(p),k);const out=[];
+  for(let i=0;i<k;i++){
+    const m=pinned.length;
+    if(m&&(Math.random()<m/Math.max(1,rLeft)||!rest.length)){out.push(pinned.splice(rnd(pinned.length),1)[0])}
+    else if(rest.length){const j=rnd(rest.length);out.push(rest[j]);rest[j]=rest[rest.length-1];rest.pop()}
+    else{const left=pl.filter(x=>!out.includes(x));if(left.length)out.push(left[rnd(left.length)])}
+    rLeft--;
+  }
+  return out}
 function sample(arr,k){const a=arr.slice(),out=[];for(let i=0;i<k&&a.length;i++){const j=rnd(a.length);out.push(a[j]);a[j]=a[a.length-1];a.pop()}return out}
 function shuffle(arr){return sample(arr,arr.length)}
 
@@ -829,9 +857,18 @@ async function shrinkImages(force){
   return n}
 
 /* ================= 설정 화면 ================= */
+function renderPins(){
+  const dl=$('#pinList'),sel=$('#pinPrize'),body=$('#pinBody');if(!dl||!sel||!body)return;
+  const lab=x=>x.name+(x.sub?' ('+x.sub+')':'');
+  dl.innerHTML=S.people.slice(0,3000).map(x=>'<option value="'+esc(lab(x))+'">').join('');
+  const prs=S.prizes.filter(q=>q.src!=='tables'),cur=sel.value;
+  sel.innerHTML=prs.map(q=>'<option value="'+esc(q.id)+'">'+esc(q.name)+'</option>').join('');if(cur&&prs.some(q=>q.id===cur))sel.value=cur;
+  const L=(S.pins||[]).filter(z=>S.people.some(x=>x.id===z.pid)&&S.prizes.some(q=>q.id===z.prizeId));
+  body.innerHTML=L.length?L.map(z=>{const x=S.people.find(q=>q.id===z.pid),q=S.prizes.find(v=>v.id===z.prizeId);return '<div class="row" style="gap:10px;align-items:center;margin:4px 0"><span>⭐ <b>'+esc(lab(x))+'</b> → '+esc(q.name)+'</span><button class="btn sm bad" data-pindel="'+esc(z.pid)+'">삭제</button></div>'}).join(''):'<p class="note" style="margin:0">지정한 분이 없어요.</p>'}
 function renderSetup(){
   $('#title').value=S.title;renderTitleCtl();$('#dedupe').checked=S.dedupe;$('#exWon').checked=S.excludeWon;$('#optAutoCsv').checked=S.autoCsv!==false;$('#optSound').checked=S.sound;
   $('#btnSound').textContent=S.sound?'소리 켜짐':'소리 꺼짐';
+  renderPins();
   $('#pcount').textContent=S.people.length.toLocaleString()+'명';
   const MAX=800;
   $('#chips').innerHTML=S.people.slice(0,MAX).map((p,i)=>`<div class="chip"><em>${i+1}</em><span class="nm" title="${esc(p.name)}">${esc(p.name)}</span><i title="${esc(p.sub)}">${esc(p.sub)}</i><b data-del="${p.id}" title="삭제">✕</b></div>`).join('')+(S.people.length>MAX?`<span class="note" style="padding:6px">… 외 ${S.people.length-MAX}명</span>`:'')||'<span class="note">아직 등록된 참가자가 없어요.</span>';
@@ -1174,7 +1211,7 @@ $('#btnDraw').onclick=async()=>{
   if(r===0){if(needCongrat(p)){congrat=congKey(p);return renderStage()}congrat=null;const nx=nextTier();if(nx<0){return showTab('res')}S.cur=nx;save();renderStage();if(remain(curPrize())>0)return $('#btnDraw').onclick();return}
   const x=activeProd(p),rx=remainProd(p,x),pl=pool(p);
   if(!pl.length)return toast('뽑을 수 있는 참가자가 없어요');
-  const k=Math.min(p.multi?rx:1,pl.length),win=sample(pl,k);
+  const k=Math.min(p.multi?rx:1,pl.length),win=pickWin(p,pl,k);
   curItem=x;busy=true;updateButton();renderProdPanel();sfx('go');
   try{
     if(p.mode==='roulette')await playRoulette(win,pl);
@@ -1513,6 +1550,13 @@ addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#histDlg').style.display=
 $('#btnCopy').onclick=async()=>{const rows=resultRows();if(rows.length<2)return toast('복사할 기록이 없어요');const t=rows.map(r=>r.join('\t')).join('\n');
   try{await navigator.clipboard.writeText(t);toast('복사했어요. 엑셀에 붙여넣기 하세요')}catch(e){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();toast('복사했어요. 엑셀에 붙여넣기 하세요')}};
 $('#btnPrint').onclick=()=>print();
+$('#pinAdd').onclick=()=>{if(window.LDAuth.role!=='admin')return;
+  const v=$('#pinWho').value.trim(),lab=x=>x.name+(x.sub?' ('+x.sub+')':'');
+  const x=S.people.find(q=>lab(q)===v)||(S.people.filter(q=>q.name===v).length===1?S.people.find(q=>q.name===v):null);
+  if(!x)return toast('명단에 있는 이름을 목록에서 선택해 주세요');
+  const prizeId=$('#pinPrize').value;if(!prizeId)return toast('등수를 선택해 주세요');
+  S.pins=(S.pins||[]).filter(z=>z.pid!==x.id);S.pins.push({pid:x.id,prizeId});save();$('#pinWho').value='';renderPins();toast('지정했어요: '+lab(x))};
+$('#pinBody').onclick=e=>{const d=e.target.dataset&&e.target.dataset.pindel;if(!d||window.LDAuth.role!=='admin')return;S.pins=(S.pins||[]).filter(z=>z.pid!==d);save();renderPins()};
 $('#btnResDone').onclick=()=>{if(busy)return;atHome=true;S.cur=0;congrat=null;save();showTab('draw')};
 $('#btnRedo').onclick=()=>{if(busy)return toast('추첨이 끝난 뒤에 눌러 주세요');
   if(!winnerCount()){atHome=false;S.winners={};S.absent=[];S.cur=0;S.pcur={};save();renderStage();return toast('처음 상태예요. 추첨 시작을 눌러 주세요')}
