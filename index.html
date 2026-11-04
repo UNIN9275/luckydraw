@@ -301,27 +301,33 @@ const enc=t=>new TextEncoder().encode(t),hex=b=>[...new Uint8Array(b)].map(x=>x.
 async function pbk(pw,salt){const k=await crypto.subtle.importKey('raw',enc(pw),'PBKDF2',false,['deriveBits']);return hex(await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:enc(salt),iterations:IT},k,256))}
 const today=()=>{const d=new Date(),z=n=>String(n).padStart(2,'0');return String(d.getFullYear()).slice(2)+z(d.getMonth()+1)+z(d.getDate())};
 const readEv=()=>{try{const s=JSON.parse(localStorage.getItem(KEY)||'null');return s&&s.event||null}catch(e){return null}};
-const evState=ev=>{if(!ev||!ev.h)return'none';const t=today();return t<ev.start?'before':t>ev.end?'ended':'ok'};
-window.LDAuth={pbk,today,evState,readEv,role:null};
+const END='이벤트가 종료되었습니다. 감사합니다.';
+let closedIds=[];
+async function pull(){try{if(!/^https?:/.test(location.protocol))return;const r=await fetch('status.json?'+Date.now(),{cache:'no-store'});if(r.ok){const j=await r.json();closedIds=Array.isArray(j.closed)?j.closed:[]}}catch(e){}}
+const evState=ev=>{if(!ev||!ev.h)return'none';if(ev.closed||(ev.id&&closedIds.includes(ev.id)))return'ended';const t=today();return t<ev.start?'before':t>ev.end?'ended':'ok'};
+window.LDAuth={pbk,today,evState,readEv,pull,END,role:null};
 function enter(role,token){window.LDAuth.role=role;document.body.classList.add('role-'+role);try{sessionStorage.setItem('ld_s',JSON.stringify({r:role,t:token}))}catch(e){}g.remove();setTimeout(()=>dispatchEvent(new Event('ld-login')),0)}
 function lock(msg){try{sessionStorage.removeItem('ld_s');if(msg)sessionStorage.setItem('ld_msg',msg)}catch(e){}location.reload()}
-setInterval(()=>{if(window.LDAuth.role==='event'&&evState(readEv())!=='ok')lock('이벤트 사용 기간이 끝나 로그아웃되었어요')},30000);
+setInterval(async()=>{if(window.LDAuth.role!=='event')return;await pull();if(evState(readEv())!=='ok')lock(END)},30000);
 try{const s=JSON.parse(sessionStorage.getItem('ld_s')||'null');
  if(s&&s.r==='admin'&&s.t===AH)enter('admin',AH);
- else if(s&&s.r==='event'){const ev=readEv();if(ev&&ev.h===s.t&&evState(ev)==='ok')enter('event',s.t)}}catch(e){}
+ else if(s&&s.r==='event'){const ev=readEv(),st=evState(ev);if(ev&&ev.h===s.t&&st==='ok')enter('event',s.t);else if(ev&&ev.h===s.t&&st==='ended')sessionStorage.setItem('ld_msg',END)}}catch(e){}
+if(window.LDAuth.role==='event')pull().then(()=>{if(window.LDAuth.role==='event'&&evState(readEv())!=='ok')lock(END)});
 if(!g.isConnected)return;
 const f=document.getElementById('gform'),i=document.getElementById('gpw'),er=document.getElementById('ger');let fails=0;
-try{const m=sessionStorage.getItem('ld_msg');if(m){er.textContent=m;sessionStorage.removeItem('ld_msg')}}catch(e){}
+const endMsg=m=>{er.textContent=m;er.style.cssText='height:auto;font-size:22px;font-weight:700;color:#ffd77a;line-height:1.5'};
+try{const m=sessionStorage.getItem('ld_msg');if(m){m===END?endMsg(m):er.textContent=m;sessionStorage.removeItem('ld_msg')}}catch(e){}
 setTimeout(()=>i.focus(),50);
 f.addEventListener('submit',async e=>{e.preventDefault();er.textContent='';const pw=i.value;
  try{
   if(fails)await new Promise(r=>setTimeout(r,Math.min(fails,6)*600));
   const ah=await pbk(pw,ASALT);
   if(ah===AH){enter('admin',AH);return}
+  await pull();
   const ev=readEv(),st=evState(ev);
   if(ev&&ev.h&&(await pbk(pw,ev.salt))===ev.h){
    if(st==='ok'){enter('event',ev.h);return}
-   er.textContent=st==='before'?'아직 사용 기간이 아니에요 (시작일 '+ev.start+')':'이벤트가 종료되어 이 비밀번호는 사용할 수 없어요 (관리자만 로그인 가능)';
+   if(st==='before')er.textContent='아직 사용 기간이 아니에요 (시작일 '+ev.start+')';else endMsg(END);
    i.value='';i.focus();return}
   fails++;er.textContent='비밀번호가 맞지 않아요';i.value='';i.focus();
  }catch(x){er.textContent='이 브라우저에서는 실행할 수 없어요'}});
@@ -351,6 +357,7 @@ f.addEventListener('submit',async e=>{e.preventDefault();er.textContent='';const
       <span class="lbl">종료일</span><input id="evEnd" type="date" style="width:165px;color-scheme:dark">
       <span class="lbl">이벤트 비밀번호</span><input id="evPw" type="text" autocomplete="off" placeholder="변경할 때만 입력" style="width:210px">
       <button class="btn gold" id="evSave">이벤트 설정 저장</button>
+      <button class="btn sm bad" id="evStop">⛔ 이벤트 강제 종료</button>
       <button class="btn sm bad" id="evNew">🆕 새 이벤트 시작</button>
     </div>
     <div class="note" id="evInfo" style="margin-top:10px"></div>
@@ -1274,7 +1281,8 @@ function renderEvCard(){
   if($('#evEnd')&&document.activeElement!==$('#evEnd'))$('#evEnd').value=ev?toIso(ev.end):'';
   let m='이벤트가 아직 설정되지 않았어요. 지금은 관리자만 로그인할 수 있어요.';
   if(ev&&ev.h){const left=Math.round((ymd(ev.end)-ymd(LDAuth.today()))/86400000);
-    m=st==='ok'?'✅ 사용 중 · '+ev.start+' ~ '+ev.end+' (종료까지 '+left+'일 남음) · 이벤트 비밀번호 설정됨'
+    m=ev.closed?'⛔ 강제 종료됨 · '+ev.start+' ~ '+ev.end+' · 이벤트 비밀번호로 로그인할 수 없어요. 다시 열려면 날짜·비밀번호를 확인하고 [이벤트 설정 저장]을 누르세요.'
+     :st==='ok'?'✅ 사용 중 · '+ev.start+' ~ '+ev.end+' (종료까지 '+left+'일 남음) · 이벤트 비밀번호 설정됨'
      :st==='before'?'⏳ 시작 전 · '+ev.start+' ~ '+ev.end+' · 시작일부터 이벤트 비밀번호로 로그인돼요'
      :'⛔ 종료됨 · '+ev.start+' ~ '+ev.end+' · 이벤트 비밀번호는 사용할 수 없어요. [새 이벤트 시작]으로 새로 설정하세요.'}
   $('#evInfo').textContent=m;
@@ -1289,8 +1297,15 @@ $('#evSave').onclick=async()=>{
     const salt=[...crypto.getRandomValues(new Uint8Array(12))].map(x=>x.toString(16).padStart(2,'0')).join('');
     ev={salt,h:await LDAuth.pbk(pw,salt)}}
   if(!ev)return savedDlg(false,'비밀번호를 입력해 주세요',['이벤트 비밀번호를 처음 설정할 때는 꼭 입력해야 해요.']);
-  S.event={start:a,end:b,salt:ev.salt,h:ev.h};save();$('#evPw').value='';renderEvCard();
+  const nid=()=>[...crypto.getRandomValues(new Uint8Array(8))].map(x=>x.toString(16).padStart(2,'0')).join('');
+  S.event={start:a,end:b,salt:ev.salt,h:ev.h,id:(S.event&&S.event.id&&!S.event.closed)?S.event.id:nid()};save();$('#evPw').value='';renderEvCard();
   savedDlg(true,'이벤트 설정을 저장했어요',['사용 기간: '+a+' ~ '+b,'이 기간에만 이벤트 비밀번호로 로그인할 수 있어요.'])};
+$('#evStop').onclick=()=>{
+  if(window.LDAuth.role!=='admin')return;
+  if(!S.event||!S.event.h)return savedDlg(false,'종료할 이벤트가 없어요',['먼저 이벤트를 설정해 주세요.']);
+  if(!confirm('이 이벤트를 지금 강제로 종료할까요?\n\n• 이벤트 비밀번호로는 더 이상 로그인할 수 없고 "이벤트가 종료되었습니다. 감사합니다."가 표시돼요\n• 사용 중인 이벤트 계정은 30초 안에 로그아웃돼요\n• 관리자는 계속 들어올 수 있어요'))return;
+  S.event.closed=true;save();renderEvCard();
+  savedDlg(true,'이벤트를 종료했어요',['이 브라우저에서는 즉시 적용됩니다.','다른 PC·브라우저는 저장소의 status.json에 이벤트 번호를 등록해야 막혀요.','이벤트 번호: '+(S.event.id||'(없음 - 설정을 한 번 더 저장하면 생겨요)')])};
 $('#evNew').onclick=()=>{
   if(window.LDAuth.role!=='admin')return;
   if(!confirm('새 이벤트를 시작할까요?\n\n• 현재 이벤트의 당첨 결과는 "지난 이벤트 결과"에 보관돼요\n• 명단·상품·설정이 모두 비워지고\n• 현재 이벤트 비밀번호는 더 이상 쓸 수 없어요 (새로 설정해야 해요)'))return;
