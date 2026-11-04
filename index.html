@@ -1299,14 +1299,15 @@ const toIso=v=>v&&v.length===6?'20'+v.slice(0,2)+'-'+v.slice(2,4)+'-'+v.slice(4,
 const EVLOG='luckydraw_evlog';
 const loadEvLog=()=>{try{return JSON.parse(localStorage.getItem(EVLOG)||'[]')}catch(e){return[]}};
 const saveEvLog=l=>{try{localStorage.setItem(EVLOG,JSON.stringify(l))}catch(e){}};
-function evLogUpsert(patch){if(!S.event||!S.event.id)return;const L=loadEvLog();let e=L.find(x=>x.id===S.event.id);if(!e){e={id:S.event.id,createdAt:S.event.createdAt||Date.now()};L.unshift(e)}Object.assign(e,{name:S.event.name||'',client:S.event.client||'',start:S.event.start,end:S.event.end},patch||{});saveEvLog(L)}
+function evLogUpsert(patch){if(!S.event||!S.event.id)return;const L=loadEvLog();let e=L.find(x=>x.id===S.event.id);if(!e){e={id:S.event.id,createdAt:S.event.createdAt||Date.now()};L.unshift(e)}Object.assign(e,{name:S.event.name||'',client:S.event.client||'',start:S.event.start,end:S.event.end,cfg:snapCfg()},patch||{});saveEvLog(L)}
+function snapCfg(){try{const c=JSON.parse(JSON.stringify(S));['event','winners','absent','cur','pcur','evDraft'].forEach(k=>delete c[k]);return c}catch(e){return null}}
 const fmtYmd=v=>v&&v.length===6?'20'+v.slice(0,2)+'-'+v.slice(2,4)+'-'+v.slice(4,6):'';
 const dayDiff=(a,b)=>Math.round((b-a)/86400000);
 const dOnly=ts=>{const d=new Date(ts);return new Date(d.getFullYear(),d.getMonth(),d.getDate())};
 function renderEvLog(){
   const box=$('#evLog');if(!box)return;const L=loadEvLog(),today=ymd(LDAuth.today());
   if(!L.length){box.innerHTML='<p class="note">아직 기록이 없어요. 이벤트를 설정하면 여기에 기록돼요.</p>';return}
-  box.innerHTML='<table class="evt"><thead><tr><th>이벤트 (원발주처)</th><th>오픈 기간</th><th>오픈 일수</th><th>설정한 날</th><th>상태</th></tr></thead><tbody>'+L.map(e=>{
+  box.innerHTML='<table class="evt"><thead><tr><th>이벤트 (원발주처)</th><th>오픈 기간</th><th>오픈 일수</th><th>설정한 날</th><th>상태</th><th></th></tr></thead><tbody>'+L.map(e=>{
     const s0=ymd(e.start),e0=ymd(e.end);if(!s0||!e0)return'';
     const planned=dayDiff(s0,e0)+1;
     const stopTs=e.closedAt||e.endedAt;let used=planned,status;
@@ -1315,12 +1316,12 @@ function renderEvLog(){
     else if(today<s0)status='⏳ 시작 전';
     else{used=dayDiff(s0,today)+1;status='🟢 진행 중 (종료 예정 '+fmtYmd(e.end)+')'}
     const nm=esc(e.name||'(이름 없음)')+(e.client?' <small>('+esc(e.client)+')</small>':'');
-    return '<tr><td><b>'+nm+'</b></td><td>'+fmtYmd(e.start)+' ~ '+fmtYmd(e.end)+'</td><td>'+used+'일간'+(used!==planned?' <small>(계획 '+planned+'일)</small>':'')+'</td><td>'+new Date(e.createdAt||0).toLocaleDateString('ko-KR')+'</td><td>'+status+'</td></tr>'}).join('')+'</tbody></table>';
+    return '<tr><td><b>'+nm+'</b></td><td>'+fmtYmd(e.start)+' ~ '+fmtYmd(e.end)+'</td><td>'+used+'일간'+(used!==planned?' <small>(계획 '+planned+'일)</small>':'')+'</td><td>'+new Date(e.createdAt||0).toLocaleDateString('ko-KR')+'</td><td>'+status+'</td><td>'+(e.cfg?'<button class="btn sm" data-reopen="'+esc(e.id)+'">🔁 이 설정으로 다시 열기</button>':'<small>설정 기록 없음</small>')+'</td></tr>'}).join('')+'</tbody></table>';
 }
 function renderEvCard(){
   const ev=S.event,st=window.LDAuth?LDAuth.evState(ev):'none';
-  if($('#evName')&&document.activeElement!==$('#evName'))$('#evName').value=ev&&ev.name||'';
-  if($('#evClient')&&document.activeElement!==$('#evClient'))$('#evClient').value=ev&&ev.client||'';
+  if($('#evName')&&document.activeElement!==$('#evName'))$('#evName').value=ev&&ev.name||(S.evDraft&&S.evDraft.name)||'';
+  if($('#evClient')&&document.activeElement!==$('#evClient'))$('#evClient').value=ev&&ev.client||(S.evDraft&&S.evDraft.client)||'';
   if(window.LDAuth&&LDAuth.role==='admin'&&ev&&ev.id&&!loadEvLog().some(x=>x.id===ev.id))evLogUpsert();
   setTimeout(renderEvLog,0);
   if($('#evStart')&&document.activeElement!==$('#evStart'))$('#evStart').value=ev?toIso(ev.start):'';
@@ -1365,6 +1366,13 @@ $('#evNew').onclick=()=>{
   if(S.event&&S.event.id)evLogUpsert(S.event.closed?{}:{endedAt:Date.now(),endReason:'새 이벤트 시작으로 종료'});
   archiveCurrent('새 이벤트 시작');S=defaults();save();
   savedDlg(true,'새 이벤트를 시작했어요',['이벤트 정보를 새로 설정해 주세요.']);setTimeout(()=>location.reload(),900)};
+$('#evLog').onclick=e=>{const b=e.target.closest('[data-reopen]');if(!b||window.LDAuth.role!=='admin')return;
+  const L=loadEvLog(),x=L.find(v=>v.id===b.dataset.reopen);if(!x||!x.cfg)return;
+  if(!confirm('"'+(x.name||'이벤트')+'" 설정으로 다시 열까요?\n\n• 그때의 명단·상품·테이블·타이틀 설정이 그대로 불러와져요\n• 당첨 결과는 비워져요 (이전 결과는 지난 이벤트 결과에 보관)\n• 현재 진행 중인 이벤트는 종료 처리돼요\n• 이어서 사용 시작일·종료일·비밀번호만 새로 정하고 [이벤트 설정 저장]을 누르세요'))return;
+  if(S.event&&S.event.id)evLogUpsert(S.event.closed?{}:{endedAt:Date.now(),endReason:'지난 이벤트 다시 열기로 종료'});
+  archiveCurrent('지난 설정으로 다시 열기');
+  S=Object.assign(defaults(),JSON.parse(JSON.stringify(x.cfg)),{winners:{},absent:[],cur:0,pcur:{},evDraft:{name:x.name||'',client:x.client||''}});save();
+  savedDlg(true,'지난 설정을 불러왔어요',['사용 시작일·종료일·비밀번호를 새로 정하고 [이벤트 설정 저장]을 눌러 주세요.']);setTimeout(()=>location.reload(),900)};
 $('#evStart').onchange=()=>{const a=$('#evStart').value,e=$('#evEnd');if(a&&(!e.value||e.value<a))e.value=a;e.min=a};
 addEventListener('ld-login',renderEvCard);renderEvCard();
 /* ===== GitHub 설정값 업로드/불러오기 (설정·명단은 이벤트 비밀번호로 암호화되어 올라감) ===== */
