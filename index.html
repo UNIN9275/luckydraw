@@ -57,6 +57,9 @@ td input[type=text]{min-width:84px}
 .btn:hover{border-color:var(--gold)}
 .btn.gold{background:linear-gradient(180deg,#ffd876,#f1b93a);border-color:#ffd876;color:#2a1c00}
 .btn.gold:hover{filter:brightness(1.07)}
+#sdOk{transition:transform .08s,box-shadow .08s,filter .08s;cursor:pointer}
+#sdOk:hover{filter:brightness(1.1);transform:translateY(-1px)}
+#sdOk:active{transform:translateY(4px) scale(.97);box-shadow:0 0 0 #b8861c,0 2px 6px rgba(0,0,0,.4);filter:brightness(.92)}
 .btn.sm{padding:6px 12px;border-radius:9px;font-size:14px}
 .btn.bad{border-color:#7a2b3b;color:#ff9aaa}
 .note{color:var(--mute);font-size:13px;line-height:1.55}
@@ -981,11 +984,11 @@ function validateCfg(){
 function savedDlg(ok,title,lines){
   let d=$('#savedDlg');
   if(!d){d=document.createElement('div');d.id='savedDlg';d.style.cssText='position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55)';
-    d.innerHTML='<div class="card" style="width:min(520px,92vw);margin:0;text-align:center;padding:30px 28px"><div id="sdIcon" style="font-size:44px;font-weight:900;line-height:1"></div><h2 id="sdTitle" style="margin:12px 0 14px;font-size:26px"></h2><div id="sdBody" style="text-align:left;line-height:1.8;font-size:16px"></div><button class="btn gold" id="sdOk" style="margin-top:20px;min-width:120px">확인</button></div>';
-    document.body.appendChild(d);d.addEventListener('mousedown',e=>{if(e.target===d||e.target.id==='sdOk')d.style.display='none'})}
+    d.innerHTML='<div class="card" style="width:min(520px,92vw);margin:0;text-align:center;padding:30px 28px"><div id="sdIcon" style="font-size:44px;font-weight:900;line-height:1"></div><h2 id="sdTitle" style="margin:12px 0 14px;font-size:26px"></h2><div id="sdBody" style="text-align:left;line-height:1.8;font-size:16px"></div><button class="btn gold" id="sdOk" style="margin-top:22px;min-width:200px;padding:14px 28px;font-size:19px;box-shadow:0 4px 0 #b8861c,0 8px 18px rgba(0,0,0,.35)">✓ 확인</button></div>';
+    document.body.appendChild(d);d.addEventListener('mousedown',e=>{if(e.target===d)d.style.display='none'});$('#sdOk').addEventListener('click',()=>{setTimeout(()=>{d.style.display='none'},140)})}
   $('#sdIcon').textContent=ok?'✓':'!';$('#sdIcon').style.color=ok?'#7be08a':'#ff9a9a';
   $('#sdTitle').textContent=title;$('#sdBody').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
-  d.style.display='flex';$('#sdOk').focus();clearTimeout(savedDlg.h);if(ok)savedDlg.h=setTimeout(()=>{d.style.display='none'},4500)}
+  d.style.display='flex';$('#sdOk').focus();clearTimeout(savedDlg.h);if(ok)savedDlg.h=setTimeout(()=>{d.style.display='none'},7000)}
 addEventListener('keydown',e=>{const d=$('#savedDlg');if(d&&d.style.display==='flex'&&(e.key==='Escape'||e.key==='Enter')){e.preventDefault();d.style.display='none'}});
 $('#btnSaveCfg').onclick=async()=>{
   const e=validateCfg();if(e)return savedDlg(false,'저장할 수 없어요',[esc(e)]);
