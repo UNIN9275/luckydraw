@@ -250,6 +250,8 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--gold)}
 .adminonly{display:none!important}
 body.role-admin .adminonly{display:block!important}
 body:not(.role-admin) #btnDown{grid-column:1 / -1}
+body.role-admin #btnDown{display:none}
+body.role-admin #btnUp{grid-column:1 / -1}
 .evt{width:100%;border-collapse:collapse;font-size:14px}
 .evt th,.evt td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
 .evt th{color:var(--mute);font-size:12px;font-weight:600}
@@ -380,7 +382,7 @@ f.addEventListener('submit',async e=>{e.preventDefault();er.textContent='';const
       <span class="note" id="ghTokInfo"></span>
     </div>
     <div class="note" id="evInfo" style="margin-top:10px"></div>
-    <div class="row" style="justify-content:space-between;align-items:center;margin:18px 0 8px"><h3 style="margin:0;font-size:16px;color:var(--gold2)">📜 지난 이벤트 내역</h3><button class="btn sm" id="btnHist2">📂 지난 이벤트 결과 확인</button></div>
+    <div class="row" style="justify-content:space-between;align-items:center;margin:18px 0 8px"><h3 style="margin:0;font-size:16px;color:var(--gold2)">📜 지난 이벤트 내역</h3><span class="row" style="gap:8px"><button class="btn sm" id="btnHist2">📂 지난 이벤트 결과 확인</button><button id="btnExpCfg" style="display:none"></button><button id="btnImpCfg" style="display:none"></button></span></div>
     <div id="evLog"></div>
   </div>
   <div class="card" style="margin-bottom:18px">
@@ -481,8 +483,6 @@ f.addEventListener('submit',async e=>{e.preventDefault();er.textContent='';const
         <button class="btn big" id="btnSaveCfg" style="grid-column:1 / -1;padding:14px 8px;font-size:17px;white-space:nowrap">설정 저장</button>
         <button class="btn gold big adminonly" id="btnUp" style="padding:12px 8px;font-size:16px;white-space:nowrap">☁ 설정값 서버에 업로드하기</button>
         <button class="btn big" id="btnDown" style="padding:12px 8px;font-size:16px;white-space:nowrap">☁ 설정값 서버에서 불러오기</button>
-        <button class="btn big adminonly" id="btnExpCfg" style="padding:10px 8px;font-size:14px;white-space:nowrap">💾 파일로 저장</button>
-        <button class="btn big adminonly" id="btnImpCfg" style="padding:10px 8px;font-size:14px;white-space:nowrap">📂 파일에서 불러오기</button>
         <input type="file" id="impCfgFile" accept=".json,application/json" style="display:none">
         <button class="btn gold big" id="btnStart" style="grid-column:1 / -1;padding:16px 8px;font-size:19px;white-space:nowrap">추첨 진행 (새로 시작)</button>
       </div>
