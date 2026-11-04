@@ -354,8 +354,8 @@ f.addEventListener('submit',async e=>{e.preventDefault();er.textContent='';const
 <!-- ① 설정 -->
 <div class="page on" id="pg-set">
   <div class="card adminonly" id="evCard" style="margin-bottom:18px">
-    <h2 style="margin:0 0 6px">🔐 이벤트 사용 기간 · 비밀번호 <small style="color:var(--mute);font-weight:500">(관리자 전용)</small></h2>
-    <p class="note" style="margin:0 0 12px">설정한 사용 기간에만 이벤트 비밀번호로 로그인돼요. 기간이 지나면 이벤트 비밀번호는 막히고 관리자만 들어올 수 있어요. 날짜는 달력에서 선택하세요.</p>
+    <h2 style="margin:0 0 6px">🔐 이벤트 사용 기간 · 비밀번호 <small style="color:var(--mute);font-weight:500">(슈퍼 어드민 전용)</small></h2>
+    <p class="note" style="margin:0 0 12px">설정한 사용 기간에만 이벤트 비밀번호로 로그인돼요. 기간이 지나면 이벤트 비밀번호는 막히고 슈퍼 어드민만 들어올 수 있어요. 날짜는 달력에서 선택하세요.</p>
     <div class="row" style="gap:12px;flex-wrap:wrap;align-items:center">
       <span class="lbl">사용 시작일</span><input id="evStart" type="date" style="width:165px;color-scheme:dark">
       <span class="lbl">종료일</span><input id="evEnd" type="date" style="width:165px;color-scheme:dark">
@@ -1281,14 +1281,14 @@ $('#histBody').addEventListener('click',e=>{
     if(box.style.display==='none'){box.innerHTML=histChips(x.rows);box.style.display='block';e.target.textContent='접기'}else{box.style.display='none';e.target.textContent='결과 보기'}}
   if(c){const x=loadHist().find(q=>q.id===c);if(x)toast('저장했어요: '+downloadCsv(x.rows,csvName('보관결과')))}
   if(d&&confirm('이 보관 기록을 삭제할까요?')){saveHist(loadHist().filter(q=>q.id!==d));renderHist()}});
-/* 이벤트 사용 기간·비밀번호 (관리자 전용) */
+/* 이벤트 사용 기간·비밀번호 (슈퍼 어드민 전용) */
 function ymd(v){if(!/^\d{6}$/.test(v))return null;const y=2000+(+v.slice(0,2)),m=+v.slice(2,4),d=+v.slice(4,6),t=new Date(y,m-1,d);return t.getFullYear()===y&&t.getMonth()===m-1&&t.getDate()===d?t:null}
 const toIso=v=>v&&v.length===6?'20'+v.slice(0,2)+'-'+v.slice(2,4)+'-'+v.slice(4,6):'',toYmd=v=>v?v.slice(2,4)+v.slice(5,7)+v.slice(8,10):'';
 function renderEvCard(){
   const ev=S.event,st=window.LDAuth?LDAuth.evState(ev):'none';
   if($('#evStart')&&document.activeElement!==$('#evStart'))$('#evStart').value=ev?toIso(ev.start):'';
   if($('#evEnd')&&document.activeElement!==$('#evEnd'))$('#evEnd').value=ev?toIso(ev.end):'';
-  let m='이벤트가 아직 설정되지 않았어요. 지금은 관리자만 로그인할 수 있어요.';
+  let m='이벤트가 아직 설정되지 않았어요. 지금은 슈퍼 어드민만 로그인할 수 있어요.';
   if(ev&&ev.h){const left=Math.round((ymd(ev.end)-ymd(LDAuth.today()))/86400000);
     m=ev.closed?'⛔ 강제 종료됨 · '+ev.start+' ~ '+ev.end+' · 이벤트 비밀번호로 로그인할 수 없어요. 다시 열려면 날짜·비밀번호를 확인하고 [이벤트 설정 저장]을 누르세요.'
      :st==='ok'?'✅ 사용 중 · '+ev.start+' ~ '+ev.end+' (종료까지 '+left+'일 남음) · 이벤트 비밀번호 설정됨'
@@ -1313,7 +1313,7 @@ $('#evSave').onclick=async()=>{
 $('#evStop').onclick=()=>{
   if(window.LDAuth.role!=='admin')return;
   if(!S.event||!S.event.h)return savedDlg(false,'종료할 이벤트가 없어요',['먼저 이벤트를 설정해 주세요.']);
-  if(!confirm('이 이벤트를 지금 강제로 종료할까요?\n\n• 이벤트 비밀번호로는 더 이상 로그인할 수 없고 "이벤트가 종료되었습니다. 감사합니다."가 표시돼요\n• 사용 중인 이벤트 계정은 30초 안에 로그아웃돼요\n• 관리자는 계속 들어올 수 있어요'))return;
+  if(!confirm('이 이벤트를 지금 강제로 종료할까요?\n\n• 이벤트 비밀번호로는 더 이상 로그인할 수 없고 "이벤트가 종료되었습니다. 감사합니다."가 표시돼요\n• 사용 중인 이벤트 계정은 30초 안에 로그아웃돼요\n• 슈퍼 어드민은 계속 들어올 수 있어요'))return;
   S.event.closed=true;save();renderEvCard();
   (async()=>{let m='이 브라우저에서는 즉시 적용됐어요.';
     if(ghTok()&&S.event.id){try{await pushEvent();m='GitHub에도 반영했어요. 다른 PC에서도 1~2분 안에 로그인이 막혀요.'}catch(e){m='⚠ 이 브라우저에만 적용됐어요. GitHub 반영 실패: '+esc(e.message)}}
@@ -1373,7 +1373,7 @@ async function cloudLoad(auto){
   if(!pw)return;
   try{
     const txt=await ghRaw(GH.pre+'config.enc');
-    if(!txt){if(!auto)savedDlg(false,'올라온 설정값이 없어요',['관리자가 먼저 [설정값 업로드]를 해야 해요.']);return}
+    if(!txt){if(!auto)savedDlg(false,'올라온 설정값이 없어요',['슈퍼 어드민이 먼저 [설정값 업로드]를 해야 해요.']);return}
     let d;try{d=await decObj(txt,pw)}catch(e){throw new Error('비밀번호가 맞지 않거나 파일이 손상됐어요')}
     if(!d||!d.state||!Array.isArray(d.state.prizes))throw new Error('설정값 형식이 올바르지 않아요');
     if(!auto&&!confirm('GitHub의 설정값으로 현재 설정을 덮어쓸까요? (명단·상품·당첨 기록이 바뀝니다. 현재 내용은 사라져요)'))return;
@@ -1384,7 +1384,7 @@ async function cloudLoad(auto){
     if(Array.isArray(d.hist))saveHist(d.hist);
     savedDlg(true,'설정값을 불러왔어요',['잠시 후 화면을 새로 고칩니다.']);setTimeout(()=>location.reload(),900)
   }catch(e){if(!auto)savedDlg(false,'불러오지 못했어요',[esc(e.message||String(e))])}}
-function renderRole(){const r=window.LDAuth&&LDAuth.role;$('#roleTag').textContent=r==='admin'?'🔑 슈퍼 어드민':r==='event'?'👤 관리자':''}
+function renderRole(){const r=window.LDAuth&&LDAuth.role;$('#roleTag').textContent=r==='admin'?'🔑 슈퍼 어드민':r==='event'?'👤 사용자':''}
 $('#btnLogout').onclick=()=>{if(busy)return toast('추첨 중에는 로그아웃할 수 없어요');if(!confirm('로그아웃할까요?'))return;LDAuth.logout()};
 addEventListener('ld-login',renderRole);renderRole();
 $('#btnUp').onclick=cloudUpload;
