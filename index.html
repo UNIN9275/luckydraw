@@ -356,6 +356,7 @@ f.addEventListener('submit',async e=>{e.preventDefault();er.textContent='';const
     <button class="tab" data-tab="res">결과</button>
   </div>
   <div class="sp"></div>
+  <button class="ico" id="btnRedo" title="당첨 기록을 지우고 처음부터 다시 추첨해요" style="color:#ff9aaa;border-color:#7a2b3b">🔄 리셋 · 다시 추첨</button>
   <button class="ico" id="btnXls" title="당첨 결과를 엑셀 파일로 다운로드해요">📥 결과 엑셀 다운로드</button>
   <button class="ico" id="btnSound" title="효과음 켜기/끄기">소리 켜짐</button>
   <button class="ico" id="btnFull" title="전체 화면 (F)">전체화면</button>
@@ -531,7 +532,6 @@ f.addEventListener('submit',async e=>{e.preventDefault();er.textContent='';const
       <div class="controls">
         <button class="btn gold big" id="btnDraw">추첨 시작</button>
         <button class="btn" id="btnOpenAll" style="display:none">카드 모두 열기</button>
-        <button class="btn bad" id="btnRedo" title="당첨 기록을 지우고 처음부터 다시 추첨해요">🔄 리셋하고 처음부터 다시 추첨</button>
       </div>
     </div>
     <div class="side">
