@@ -1391,13 +1391,26 @@ $('#ghTokSave').onclick=async()=>{
     localStorage.setItem('luckydraw_gh',t);$('#ghTok').value='';renderTok();savedDlg(true,'접근 키를 저장했어요',['이 브라우저에만 저장되고 코드·설정 파일에는 들어가지 않아요.'])
   }catch(e){savedDlg(false,'접근 키를 확인하지 못했어요',[esc(e.message)])}};
 $('#ghTokDel').onclick=()=>{if(window.LDAuth.role!=='admin')return;try{localStorage.removeItem('luckydraw_gh')}catch(e){}renderTok()};
+function askUploadPw(){
+  return new Promise(res=>{
+    const old=$('#upDlg');if(old)old.remove();
+    const d=document.createElement('div'),ev=S.event;d.id='upDlg';
+    d.style.cssText='position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6)';
+    d.innerHTML=`<form class="card" style="width:min(480px,92vw);margin:0;padding:26px 26px 22px"><div style="font-size:14px;color:var(--mute)">설정값을 서버에 업로드할 이벤트</div><h2 style="margin:6px 0 4px;font-size:26px;color:var(--gold2)">${esc(ev.name||'(이벤트 이름 없음)')}</h2>${ev.client?`<div style="color:var(--mute);margin-bottom:4px">${esc(ev.client)}</div>`:''}<div style="margin:6px 0 18px;color:var(--mute);font-size:14px">사용 기간 ${fmtYmd(ev.start)} ~ ${fmtYmd(ev.end)}</div><label class="lbl">이벤트 비밀번호 <span style="color:var(--mute)">(이 비밀번호로 암호화되어 올라가요)</span></label><input id="upPw" type="password" autocomplete="off" style="width:100%;margin:8px 0 18px"><div style="display:flex;gap:10px;justify-content:flex-end"><button type="button" class="btn" id="upCancel">취소</button><button type="submit" class="btn gold" id="upOk">업로드</button></div></form>`;
+    document.body.appendChild(d);
+    const pw=d.querySelector('#upPw');pw.value=$('#evPw').value||'';setTimeout(()=>pw.focus(),30);
+    const done=v=>{d.remove();res(v)};
+    d.querySelector('form').onsubmit=e=>{e.preventDefault();done(pw.value)};
+    d.querySelector('#upCancel').onclick=()=>done(null);
+    d.addEventListener('mousedown',e=>{if(e.target===d)done(null)});
+    d.addEventListener('keydown',e=>{if(e.key==='Escape')done(null)});
+  })}
 async function cloudUpload(){
   if(window.LDAuth.role!=='admin')return;
   if(!S.event||!S.event.h||!S.event.id)return savedDlg(false,'이벤트를 먼저 설정해 주세요',['이벤트 카드에서 날짜와 비밀번호를 입력하고 [이벤트 설정 저장]을 먼저 눌러 주세요.']);
   if(!ghTok())return savedDlg(false,'GitHub 접근 키가 필요해요',['이벤트 카드 아래 "GitHub 접근 키"에 키를 입력하고 [키 저장·확인]을 눌러 주세요.']);
-  let pw=$('#evPw').value;
-  if(!pw)pw=prompt('이벤트 비밀번호를 입력하세요 (설정값이 이 비밀번호로 암호화되어 올라갑니다)')||'';
-  if(!pw)return
+  const pw=await askUploadPw();
+  if(!pw)return;
   if(await LDAuth.pbk(pw,S.event.salt)!==S.event.h)return savedDlg(false,'비밀번호가 달라요',['입력한 비밀번호가 저장된 이벤트 비밀번호와 달라요.']);
   const b=$('#btnUp'),t0=b.textContent;b.disabled=true;b.textContent='업로드 중…';
   try{
