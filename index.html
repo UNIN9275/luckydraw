@@ -127,6 +127,10 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--gold)}
 .ssub{margin-top:8px;color:var(--mute);font-size:clamp(14px,1.8vw,26px);min-height:1.2em}
 .ssub:empty{display:none}  /* 소속이 없으면 빈 줄을 없애서 이름이 상자 위아래 가운데에 오게 */
 .sname.tick{animation:tick .09s ease-out}
+.big-chip2 .cn{display:block}
+.big-chip2 .cn.tick{animation:tick .09s ease-out}
+.big-chip2.gold.win{border-color:#fff;box-shadow:0 0 0 3px var(--gold),0 0 46px rgba(255,214,102,.75);animation:pop .6s ease-out}
+.big-chip2.gold.win .cn{color:var(--gold2)}
 @keyframes tick{from{transform:scale(.94);opacity:.35}to{transform:none;opacity:1}}  /* 위아래로 흔들리지 않고 가운데에서 살짝 커지며 바뀜 */
 .slot.win{border-color:#fff;box-shadow:0 0 0 4px var(--gold),0 0 70px rgba(255,214,102,.75);animation:pop .6s ease-out}
 .slot.win .sname{color:var(--gold2);animation:settle .55s ease-out}
@@ -1100,8 +1104,8 @@ new MutationObserver(fitSoon).observe($('#arena'),{childList:true,subtree:true})
 $('#ptabs').addEventListener('click',e=>{const b=e.target.closest('.ptab');if(!b||busy)return;S.cur=+b.dataset.i;save();renderStage()});
 $('#prodbar').addEventListener('click',e=>{const b=e.target.closest('.pchip');if(!b||busy)return;const p=curPrize();S.pcur[p.id]=b.dataset.px;save();$('#prodbar').innerHTML=prodbarHTML();renderIdle();updateButton();renderProdPanel()});
 /* 당첨자 칩: 5명 이상이면 위아래 두 줄로 나누고, 이름 길이와 줄당 인원에 맞춰 글자 크기를 자동 조절 (스크롤 없음) */
-function chipsHTML(list,step=60,mul=1,fixCols=0,gold=false){
-  const n=list.length;if(!n)return'';
+function chipsHTML(list,step=60,mul=1,fixCols=0,gold=false,spin=false,nv=0){
+  const n=Math.max(list.length,nv||0);if(!list.length)return'';
   const avail=Math.max(320,($('#arena').clientWidth||820)-70),MAXC=14;
   let rows=n<=4?1:2,cols=Math.ceil(n/rows);
   if(cols>MAXC){cols=MAXC;rows=Math.ceil(n/cols)}
@@ -1109,7 +1113,8 @@ function chipsHTML(list,step=60,mul=1,fixCols=0,gold=false){
   const maxLen=Math.max(3,...list.map(w=>[...String(w.name)].length));
   const cap=n<=1?120:n<=2?96:n<=4?72:n<=8?48:32; // 당첨자가 적을수록 글씨를 크게
   const fs=Math.max(12,Math.floor(Math.min(cap,Math.floor((avail/cols-14)/(maxLen*0.98)))*mul));
-  return`<div class="chipgrid2" style="grid-template-columns:repeat(${cols},minmax(0,1fr));font-size:${fs}px">`+list.map((w,i)=>`<div class="big-chip2${gold?' gold':''}" style="animation-delay:${i*step}ms">${esc(w.name)}${w.sub?`<small>${esc(w.sub)}</small>`:''}</div>`).join('')+`</div>`}
+  const gtc=list.length<cols?`repeat(${list.length},calc((100% - ${(cols-1)*10}px)/${cols}))`:`repeat(${cols},minmax(0,1fr))`;
+  return`<div class="chipgrid2" style="grid-template-columns:${gtc};justify-content:center;font-size:${fs}px">`+list.map((w,i)=>`<div class="big-chip2${gold?' gold':''}" style="animation-delay:${i*step}ms">${spin?`<span class="cn" id="s${i}">?</span><small id="u${i}">&nbsp;</small>`:esc(w.name)+(w.sub?`<small>${esc(w.sub)}</small>`:'')}</div>`).join('')+`</div>`}
 const srcKey=q=>q&&q.src==='tables'?'tables':'people';
 let congrat=null,atHome=false;
 const isCatLast=p=>{const i=S.prizes.indexOf(p),n=S.prizes[i+1];return !n||srcKey(n)!==srcKey(p)};
@@ -1130,7 +1135,7 @@ function renderIdle(){
   if(congrat===congKey(p)&&r===0){$('#arena').innerHTML=congratHTML(p);return}
   if(r===0&&wonOf(p).length){
     $('#arena').innerHTML=`<div class="grp">`+p.products.map(x=>{const l=wonOfProd(p,x);if(!l.length)return'';
-      return`<div class="gbox">${chipsHTML(l,60,1,0,true)}</div>`}).join('')+`</div>`;
+      return`<div class="gbox">${chipsHTML(l,60,.66,0,true,false,Math.max(l.length,x.qty||0))}</div>`}).join('')+`</div>`;
   }else{
     const x=activeProd(p),modeName={slot:'슬롯머신',roulette:'룰렛',card:'카드 뒤집기'}[p.mode];
     $('#arena').innerHTML=`<div class="pname">${titleOf(p,x)}</div>`;
@@ -1194,7 +1199,7 @@ function spinSlot(i,w,pl,total){
       const fin=t+delay>=total;          // 다음 이름 바뀜이 끝 시각을 넘으면, 지금 보이는 이름이 마지막 = 당첨자 (이후 더 바뀌지 않음)
       let p=w;
       if(!fin){let guard=0;do{p=pl[rnd(pl.length)]}while(pl.length>1&&(p.id===w.id||p.name===last)&&guard++<12)}  // 도는 중에는 당첨자 이름이 마지막 직전에 미리 나오지 않게
-      last=p.name;n.textContent=p.name;u.textContent=p.sub||'';
+      last=p.name;n.textContent=p.name;u.textContent=p.sub||' ';
       n.classList.remove('tick');void n.offsetWidth;n.classList.add('tick');
       if(fin){box.classList.add('win');sfx('win');const r=box.getBoundingClientRect();confetti(r.left+r.width/2,r.top+r.height/2,pl.length>1?90:60);res();return}
       sfx('tick');setTimeout(tick,delay);
@@ -1204,7 +1209,7 @@ function spinSlot(i,w,pl,total){
 async function playSlot(win,pl){
   const arena=$('#arena'),k=win.length;
   if(k<=10){
-    arena.innerHTML=`${phead(curPrize(),curItem)}<div class="slots k${k}">`+win.map((w,i)=>`<div class="slot"><div class="sname" id="s${i}">?</div><div class="ssub" id="u${i}"></div></div>`).join('')+`</div>`;
+    arena.innerHTML=`${phead(curPrize(),curItem)}${chipsHTML(win,0,.66,0,true,true,Math.max(win.length,(curItem&&curItem.qty)||0))}`;
     await Promise.all(win.map((w,i)=>spinSlot(i,w,pl,3400+i*850)));
   }else{
     arena.innerHTML=`${phead(curPrize(),curItem)}<div class="slots k1"><div class="slot"><div class="sname" id="s0">?</div><div class="ssub" id="u0"></div></div></div>`;
