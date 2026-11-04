@@ -571,6 +571,7 @@ f.addEventListener('submit',async e=>{e.preventDefault();er.textContent='';const
     </div>
     <h2 id="resTitle" style="margin:6px 0 16px"></h2>
     <div id="resBody"></div>
+    <div class="row" style="justify-content:center;margin:26px 0 6px"><button class="btn gold big" id="btnResDone" style="min-width:240px">확인</button></div>
   </div>
 </div>
 
@@ -1512,6 +1513,7 @@ addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#histDlg').style.display=
 $('#btnCopy').onclick=async()=>{const rows=resultRows();if(rows.length<2)return toast('복사할 기록이 없어요');const t=rows.map(r=>r.join('\t')).join('\n');
   try{await navigator.clipboard.writeText(t);toast('복사했어요. 엑셀에 붙여넣기 하세요')}catch(e){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();toast('복사했어요. 엑셀에 붙여넣기 하세요')}};
 $('#btnPrint').onclick=()=>print();
+$('#btnResDone').onclick=()=>{if(busy)return;atHome=true;S.cur=0;congrat=null;save();showTab('draw')};
 $('#btnRedo').onclick=()=>{if(busy)return toast('추첨이 끝난 뒤에 눌러 주세요');
   if(!winnerCount()){atHome=false;S.winners={};S.absent=[];S.cur=0;S.pcur={};save();renderStage();return toast('처음 상태예요. 추첨 시작을 눌러 주세요')}
   if(!confirm('당첨 기록과 불참 처리를 모두 지우고 처음(첫 번째 등수)부터 다시 추첨할까요?'+String.fromCharCode(10)+String.fromCharCode(10)+'(명단·상품 설정은 그대로이고, 지우기 전의 결과는 보관함에 자동 보관돼요)'))return;
