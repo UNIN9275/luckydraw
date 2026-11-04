@@ -1162,7 +1162,7 @@ $('#wlist').addEventListener('click',e=>{
 if($('#btnUndo'))$('#btnUndo').onclick=()=>{if(busy)return;const p=curPrize(),l=wonOf(p);if(!l.length)return toast('취소할 당첨이 없어요');l.pop();save();renderStage();toast('마지막 당첨을 취소했어요')};
 function updateButton(){
   const p=curPrize(),r=remain(p),b=$('#btnDraw');
-  if(r===0){const last=nextTier()<0;b.textContent=last?'확인':'다음 추첨'}
+  if(r===0){const last=nextTier()<0;b.textContent=last?'결과확인':'다음 추첨'}
   else{const x=activeProd(p),rx=remainProd(p,x);
     b.textContent=p.multi?`${Math.min(rx,pool(p).length||rx)}명 한 번에 뽑기`:'추첨 시작'}
   b.disabled=busy;b.style.opacity=busy?.5:1;b.style.display=atHome?'none':'';
