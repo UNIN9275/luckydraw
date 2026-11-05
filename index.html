@@ -216,7 +216,7 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--gold)}
 /* 추첨 화면: 왼쪽 상품 칸·오른쪽 당첨자 칸을 왼쪽으로 모으고 글씨를 키움 */
 @media(min-width:1101px){
   #pg-draw.page{max-width:none;padding-left:20px;padding-right:20px}
-  #pg-draw.on{display:grid;grid-template-columns:300px minmax(0,1fr) minmax(340px,max-content);column-gap:22px;grid-template-rows:auto auto minmax(0,1fr);align-items:start;padding-top:10px}
+  #pg-draw.on{display:grid;grid-template-columns:210px minmax(0,1fr) minmax(250px,max-content);column-gap:22px;grid-template-rows:auto auto minmax(0,1fr);align-items:start;padding-top:10px}
   #pg-draw .stage{display:contents}
   #pg-draw .stage-head{grid-column:2;grid-row:1}
   #pg-draw .prodbar{grid-column:2;grid-row:2}
@@ -226,7 +226,7 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--gold)}
   #pg-draw .pp-cat{font-size:clamp(20px,1.9vw,30px);margin-bottom:8px}
   #pg-draw .pp-tier{font-size:clamp(22px,2.2vw,34px);margin-top:10px}
   #pg-draw .pp-name{font-size:clamp(20px,1.9vw,30px)}
-  #pg-draw .pp-img{max-height:36vh}
+  #pg-draw .pp-img{max-height:20vh}
   #pg-draw .pp-prog{font-size:16px}
 }
 /* 가운데 메인 영역을 더 크게 */
@@ -245,15 +245,15 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--gold)}
 #pg-draw .slots.k1 .slot{min-height:min(46vh,380px)}
 #pg-draw .slots.k1 .sname{font-size:clamp(48px,8.2vw,160px)}
 #pg-draw .slots:not(.k1) .sname{font-size:clamp(30px,4vw,64px)}
-#pg-draw .pp-cat{font-size:clamp(26px,2.6vw,42px)}
-#pg-draw .pp-tier{font-size:clamp(28px,3vw,46px)}
-#pg-draw .pp-name{font-size:clamp(26px,2.6vw,42px)}
-#pg-draw .pp-prog{font-size:19px}
-#pg-draw .pp-prog .bar{height:12px}
-#pg-draw .side h2{font-size:clamp(22px,2vw,30px)}
-#pg-draw .w{padding:8px 14px;gap:12px}
-#pg-draw .w .nm{font-size:clamp(20px,1.8vw,28px)}
-#pg-draw .w .no{width:32px;height:32px;font-size:16px}
+#pg-draw .pp-cat{font-size:clamp(16px,1.4vw,22px)}
+#pg-draw .pp-tier{font-size:clamp(17px,1.5vw,24px)}
+#pg-draw .pp-name{font-size:clamp(15px,1.3vw,21px)}
+#pg-draw .pp-prog{font-size:14px}
+#pg-draw .pp-prog .bar{height:8px}
+#pg-draw .side h2{font-size:clamp(16px,1.3vw,21px)}
+#pg-draw .w{padding:5px 10px;gap:8px}
+#pg-draw .w .nm{font-size:clamp(15px,1.2vw,19px)}
+#pg-draw .w .no{width:24px;height:24px;font-size:12px}
 /* 결과 표: 모든 등수의 열 위치·너비를 같게 */
 .rgroup table{table-layout:fixed;width:100%}
 .rgroup th,.rgroup td{text-align:left;vertical-align:middle;overflow:hidden;text-overflow:ellipsis}
@@ -1178,7 +1178,7 @@ function renderIdle(){
       return`<div class="gbox">${chipsHTML(l,60,.66,0,true,false,Math.max(l.length,x.qty||0))}</div>`}).join('')+`</div>`;
   }else{
     const x=activeProd(p),modeName={slot:'슬롯머신',roulette:'룰렛',card:'카드 뒤집기'}[p.mode];
-    $('#arena').innerHTML=`<div class="pname">${titleOf(p,x)}</div>`;
+    $('#arena').innerHTML='';
   }
 }
 function renderSide(){
@@ -1249,10 +1249,10 @@ function spinSlot(i,w,pl,total){
 async function playSlot(win,pl){
   const arena=$('#arena'),k=win.length;
   if(k<=10){
-    arena.innerHTML=`${phead(curPrize(),curItem)}${chipsHTML(win,0,.66,0,true,true,Math.max(win.length,(curItem&&curItem.qty)||0))}`;
+    arena.innerHTML=`${chipsHTML(win,0,.66,0,true,true,Math.max(win.length,(curItem&&curItem.qty)||0))}`;
     await Promise.all(win.map((w,i)=>spinSlot(i,w,pl,3400+i*850)));
   }else{
-    arena.innerHTML=`${phead(curPrize(),curItem)}<div class="slots k1"><div class="slot"><div class="sname" id="s0">?</div><div class="ssub" id="u0"></div></div></div>`;
+    arena.innerHTML=`<div class="slots k1"><div class="slot"><div class="sname" id="s0">?</div><div class="ssub" id="u0"></div></div></div>`;
     const t0=performance.now();let last='';
     await new Promise(res=>{(function tick(){const t=performance.now()-t0;if(t>=4200)return res();let p=pl[rnd(pl.length)];$('#s0').textContent=p.name;$('#u0').textContent=p.sub||'';sfx('tick');setTimeout(tick,40+Math.pow(t/4200,2.6)*330)})()});
     arena.innerHTML=`<div class="phead">${pimg(curItem,'pthumb')}<div class="pname">🎉 ${titleOf(curPrize(),curItem)} 당첨자</div></div>${chipsHTML(win,90)}`;
