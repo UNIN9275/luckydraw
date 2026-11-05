@@ -1137,11 +1137,7 @@ function fitStage(){
   const head=document.querySelector('.stage-head'),t=$('#stTitle'),ar=$('#arena'),st=ar.parentElement;
   const base=S.titleSize||40;let top=S.titleTop??36;
   ar.style.minHeight='';t.style.setProperty('--tsz',base+'px');head.style.setProperty('--ttop',top+'px');
-  const over=()=>st.getBoundingClientRect().bottom+scrollY>innerHeight-16;
-  if(!over())return;
-  ar.style.minHeight='0';
-  if(over()){head.style.setProperty('--ttop','6px')}
-  if(over()){ar.style.minHeight='0'}
+  const tp=ar.getBoundingClientRect().top+scrollY;ar.style.minHeight=Math.max(220,Math.round(innerHeight-2*tp))+'px';  // 슬롯·결과 박스가 화면 위아래 정가운데에 오도록
 }
 let fitTimer=null;const fitSoon=()=>{clearTimeout(fitTimer);fitTimer=setTimeout(fitStage,60)};
 addEventListener('resize',fitSoon);document.addEventListener('fullscreenchange',fitSoon);
@@ -1172,7 +1168,7 @@ const nextTier=()=>S.prizes.findIndex((q,i)=>i>S.cur&&remain(q)>0);
 function congratHTML(p){
   const k=srcKey(p),tiers=k==='tables'?S.prizes.filter(q=>srcKey(q)===k&&wonOf(q).length):[p];
   return `<div class="cg">`+
-    `<div class="cg-tier">${chipsHTML(tiers.flatMap(q=>orderedWinners(q)),70,.82,0,true)}</div>`+`</div>`;  // 모든 등수의 결과를 한 줄(가로)로 나란히
+    `<div class="cg-tier">${chipsHTML(tiers.flatMap(q=>orderedWinners(q)),70,1.15,0,true)}</div>`+`</div>`;  // 모든 등수의 결과를 한 줄(가로)로 나란히
 }
 function renderIdle(){
   const p=curPrize();$('#btnOpenAll').style.display='none';
@@ -1181,7 +1177,7 @@ function renderIdle(){
   if(congrat===congKey(p)&&r===0){$('#arena').innerHTML=congratHTML(p);return}
   if(r===0&&wonOf(p).length){
     {const all=p.products.flatMap(x=>wonOfProd(p,x));  // 상품이 여러 개여도 한 묶음(가로 배열·같은 크기)으로 표시
-    $('#arena').innerHTML=`<div class="grp"><div class="gbox">${chipsHTML(all,60,.82,0,true,false,Math.max(all.length,p.products.reduce((t,x)=>t+(x.qty||0),0)))}</div></div>`}
+    $('#arena').innerHTML=`<div class="grp"><div class="gbox">${chipsHTML(all,60,1.15,0,true,false,Math.max(all.length,p.products.reduce((t,x)=>t+(x.qty||0),0)))}</div></div>`}
   }else{
     const x=activeProd(p),modeName={slot:'슬롯머신',roulette:'룰렛',card:'카드 뒤집기'}[p.mode];
     $('#arena').innerHTML='';
@@ -1196,7 +1192,7 @@ function renderSide(){
     const l=orderedWinners(q);
     if(!l.length&&q!==p)return;
     if(tiers.length>1)h+=`<div class="wtier">${esc(q.name)}</div>`;
-    h+=l.length?l.map((w,i)=>`<div class="w"><span class="no">${i+1}</span><span class="nm">${esc(w.name)}<small>${esc([w.sub,w.prod?'🎁 '+w.prod:''].filter(Boolean).join(' · '))}</small></span><button class="btn sm bad" data-abs="${w.id}" data-pid="${q.id}" title="불참 처리 후 다시 뽑기">✕</button></div>`).join(''):'<span class="note">아직 없어요.</span>';
+    h+=l.length?l.map((w,i)=>`<div class="w"><span class="no">${i+1}</span><span class="nm">${esc(w.name)}<small>${esc([w.prod?'🎁 '+w.prod:''].filter(Boolean).join(' · '))}</small></span><button class="btn sm bad" data-abs="${w.id}" data-pid="${q.id}" title="불참 처리 후 다시 뽑기">✕</button></div>`).join(''):'<span class="note">아직 없어요.</span>';
   });
   $('#wlist').innerHTML=h;
   const sd=document.querySelector('.side');if(sd)sd.scrollTop=sd.scrollHeight;
@@ -1255,7 +1251,7 @@ function spinSlot(i,w,pl,total){
 async function playSlot(win,pl){
   const arena=$('#arena'),k=win.length;
   if(k<=10){
-    arena.innerHTML=`${chipsHTML(win,0,.82,0,true,true,Math.max(win.length,(curItem&&curItem.qty)||0))}`;
+    arena.innerHTML=`${chipsHTML(win,0,1.15,0,true,true,Math.max(win.length,(curItem&&curItem.qty)||0))}`;
     await Promise.all(win.map((w,i)=>spinSlot(i,w,pl,3400+i*850)));
   }else{
     arena.innerHTML=`<div class="slots k1"><div class="slot"><div class="sname" id="s0">?</div><div class="ssub" id="u0"></div></div></div>`;
