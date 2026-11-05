@@ -1123,7 +1123,7 @@ function renderProdPanel(){
 
 function renderStage(){
   const cgNow=!atHome&&congrat===congKey(curPrize())&&remain(curPrize())===0;  // 결과 축하 화면이면 제목 자리에 Congratulations 표시
-  $('#stTitle').innerHTML=cgNow?'🎉 Congratulations 🎊':titleHTML(S.title||'럭키드로우');$('#stTitle').style.setProperty('--tsz',(S.titleSize||40)+'px');$('#stTitle').style.textAlign=S.titleAlign||'center';$('#stTitle').style.fontFamily=fontStack(S.titleFont);$('#stTitle').style.fontWeight=S.titleBold?700:400;document.querySelector('.stage-head').style.setProperty('--ttop',(S.titleTop??36)+'px');
+  $('#stTitle').innerHTML=cgNow?'<span style="font-size:.72em">🎉 Congratulations 🎊</span>':titleHTML(S.title||'럭키드로우');$('#stTitle').style.setProperty('--tsz',(S.titleSize||40)+'px');$('#stTitle').style.textAlign=S.titleAlign||'center';$('#stTitle').style.fontFamily=fontStack(S.titleFont);$('#stTitle').style.fontWeight=S.titleBold?700:400;document.querySelector('.stage-head').style.setProperty('--ttop',(S.titleTop??36)+'px');
   $('#ptabs').innerHTML=ptabsHTML();$('#prodbar').innerHTML=prodbarHTML();
   renderIdle();renderSide();updateButton();renderProdPanel();fitStage();
 }
@@ -1168,7 +1168,7 @@ const nextTier=()=>S.prizes.findIndex((q,i)=>i>S.cur&&remain(q)>0);
 function congratHTML(p){
   const k=srcKey(p),tiers=k==='tables'?S.prizes.filter(q=>srcKey(q)===k&&wonOf(q).length):[p];
   return `<div class="cg">`+
-    `<div class="cg-tier">${chipsHTML(tiers.flatMap(q=>orderedWinners(q)),70,.66,0,true)}</div>`+`</div>`;  // 모든 등수의 결과를 한 줄(가로)로 나란히
+    `<div class="cg-tier">${chipsHTML(tiers.flatMap(q=>orderedWinners(q)),70,.82,0,true)}</div>`+`</div>`;  // 모든 등수의 결과를 한 줄(가로)로 나란히
 }
 function renderIdle(){
   const p=curPrize();$('#btnOpenAll').style.display='none';
@@ -1177,7 +1177,7 @@ function renderIdle(){
   if(congrat===congKey(p)&&r===0){$('#arena').innerHTML=congratHTML(p);return}
   if(r===0&&wonOf(p).length){
     {const all=p.products.flatMap(x=>wonOfProd(p,x));  // 상품이 여러 개여도 한 묶음(가로 배열·같은 크기)으로 표시
-    $('#arena').innerHTML=`<div class="grp"><div class="gbox">${chipsHTML(all,60,.66,0,true,false,Math.max(all.length,p.products.reduce((t,x)=>t+(x.qty||0),0)))}</div></div>`}
+    $('#arena').innerHTML=`<div class="grp"><div class="gbox">${chipsHTML(all,60,.82,0,true,false,Math.max(all.length,p.products.reduce((t,x)=>t+(x.qty||0),0)))}</div></div>`}
   }else{
     const x=activeProd(p),modeName={slot:'슬롯머신',roulette:'룰렛',card:'카드 뒤집기'}[p.mode];
     $('#arena').innerHTML='';
@@ -1251,7 +1251,7 @@ function spinSlot(i,w,pl,total){
 async function playSlot(win,pl){
   const arena=$('#arena'),k=win.length;
   if(k<=10){
-    arena.innerHTML=`${chipsHTML(win,0,.66,0,true,true,Math.max(win.length,(curItem&&curItem.qty)||0))}`;
+    arena.innerHTML=`${chipsHTML(win,0,.82,0,true,true,Math.max(win.length,(curItem&&curItem.qty)||0))}`;
     await Promise.all(win.map((w,i)=>spinSlot(i,w,pl,3400+i*850)));
   }else{
     arena.innerHTML=`<div class="slots k1"><div class="slot"><div class="sname" id="s0">?</div><div class="ssub" id="u0"></div></div></div>`;
