@@ -262,10 +262,10 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--gold)}
 .rgroup th:nth-child(3),.rgroup td:nth-child(3){width:20%}
 .rgroup th:nth-child(5),.rgroup td:nth-child(5){width:215px;white-space:nowrap}
 /* 결과 화면: 추첨 화면과 같은 금테 상자, 가로 4개씩 */
-.rchips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
-.rchip{background:linear-gradient(180deg,#0a1230,#16275a);border:3px solid var(--gold);border-radius:18px;padding:16px 10px;text-align:center;box-shadow:inset 0 0 30px rgba(0,0,0,.5),0 0 22px rgba(246,196,83,.2);display:flex;flex-direction:column;justify-content:center;min-height:96px}
-.rchip .rn{color:var(--gold2);font-weight:900;font-size:clamp(22px,2.4vw,38px);line-height:1.15;word-break:keep-all}
-.rchip .rs{margin-top:6px;color:var(--mute);font-size:clamp(13px,1.2vw,18px)}
+.rchips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.rchip{background:linear-gradient(180deg,#0a1230,#16275a);border:2px solid var(--gold);border-radius:12px;padding:7px 8px;text-align:center;box-shadow:inset 0 0 20px rgba(0,0,0,.5),0 0 12px rgba(246,196,83,.18);display:flex;flex-direction:column;justify-content:center;min-height:58px}
+.rchip .rn{color:var(--gold2);font-weight:900;font-size:clamp(16px,1.6vw,25px);line-height:1.15;word-break:keep-all}
+.rchip .rs{margin-top:2px;color:var(--mute);font-size:clamp(11px,.9vw,14px)}
 @media(max-width:900px){.rchips{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media print{.rchip{background:#fff;border:2px solid #000;box-shadow:none}.rchip .rn,.rchip .rs{color:#000}}
 /* 관리자 전용 영역 */
@@ -315,8 +315,8 @@ body.role-admin #btnUp{grid-column:1 / -1}
 .hrow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .hbtn{display:flex;gap:6px}
 .tprev{margin-top:10px;padding:14px 18px;border:1px dashed var(--line);border-radius:12px;background:#0a1230;overflow:hidden;color:var(--gold2);white-space:pre-line;line-height:1.25;text-shadow:0 0 22px rgba(246,196,83,.35)}
-.rgroup{margin-bottom:22px}
-.rgroup h3{color:var(--gold2);margin-bottom:8px;font-size:20px}
+.rgroup{margin-bottom:12px}
+.rgroup h3{color:var(--gold2);margin-bottom:5px;font-size:16px}
 @media print{
   body{background:#fff;color:#000}
   .top,.page:not(#pg-res),.ractions,.stage-head,#histBody{display:none!important}
