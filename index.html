@@ -124,7 +124,6 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--gold)}
 /* 추첨 단추는 화면 아래에 항상 고정 */
 #pg-draw .controls{position:fixed;left:0;right:0;bottom:20px;margin:0;z-index:30;pointer-events:none}
 #pg-draw .controls .btn{pointer-events:auto}
-#pg-draw.page{padding-bottom:130px}
 
 /* 슬롯 */
 .slots{display:grid;gap:18px;width:100%;justify-content:center;grid-template-columns:repeat(auto-fit,minmax(260px,420px))}
@@ -1128,7 +1127,7 @@ function renderProdPanel(){
 
 function renderStage(){
   const cgNow=!atHome&&congrat===congKey(curPrize())&&remain(curPrize())===0;  // 결과 축하 화면이면 제목 자리에 Congratulations 표시
-  $('#stTitle').innerHTML=cgNow?'<span style="font-size:.72em">🎉 Congratulations 🎊</span>':titleHTML(S.title||'럭키드로우');$('#stTitle').style.setProperty('--tsz',(S.titleSize||40)+'px');$('#stTitle').style.textAlign=S.titleAlign||'center';$('#stTitle').style.fontFamily=fontStack(S.titleFont);$('#stTitle').style.fontWeight=S.titleBold?700:400;document.querySelector('.stage-head').style.setProperty('--ttop',(S.titleTop??36)+'px');
+  $('#stTitle').innerHTML=cgNow?'<span style="font-size:.72em;position:relative;top:-22px">🎉 Congratulations 🎊</span>':titleHTML(S.title||'럭키드로우');$('#stTitle').style.setProperty('--tsz',(S.titleSize||40)+'px');$('#stTitle').style.textAlign=S.titleAlign||'center';$('#stTitle').style.fontFamily=fontStack(S.titleFont);$('#stTitle').style.fontWeight=S.titleBold?700:400;document.querySelector('.stage-head').style.setProperty('--ttop',(S.titleTop??36)+'px');
   $('#ptabs').innerHTML=ptabsHTML();$('#prodbar').innerHTML=prodbarHTML();
   renderIdle();renderSide();updateButton();renderProdPanel();fitStage();
 }
@@ -1153,7 +1152,10 @@ function chipsHTML(list,step=60,mul=1,fixCols=0,gold=false,spin=false,nv=0){
   if(cols>MAXC){cols=MAXC;rows=Math.ceil(n/cols)}
   if(fixCols){cols=fixCols}
   const cap=n<=1?100:n<=2?96:n<=4?72:n<=8?48:32; // 당첨자가 적을수록 글씨를 크게
-  const fs=Math.max(12,Math.floor(Math.min(cap,Math.floor((avail/cols-14)/(5*0.98)))*mul)); // 이름 길이와 무관: 인원수·화면 폭으로만 정해져 모든 박스 크기 동일
+  const fsW=Math.floor(Math.min(cap,Math.floor((avail/cols-14)/(5*0.98)))*mul); // 이름 길이와 무관: 인원수·화면 폭으로만 정해져 모든 박스 크기 동일
+  const topY=($('#arena').getBoundingClientRect().top||0)+scrollY,budget=Math.max(150,innerHeight-topY-170-52); // 아래 추첨 단추 쪽 170px은 비워 둠(박스와 단추 사이 간격)
+  const fsH=Math.floor(((budget-(rows-1)*10)/rows)/(list.some(x=>x.sub)?2.6:2.1));
+  const fs=Math.max(12,Math.min(fsW,fsH));
   // 높이는 항상 같게(글자 크기 고정), 가로 폭만 이름·소속 길이에 맞춰 늘어남(화면 폭 안에서)
   const emW=t=>[...String(t||'')].reduce((q,c)=>q+(/[A-Z]/.test(c)?.72:/[a-z0-9 \-.,'()]/.test(c)?.56:1),0);
   const need=Math.max(...list.map(w=>Math.max(emW(w.name)*fs,emW(w.sub)*fs*.36)))+fs*1.1;
