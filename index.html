@@ -1151,10 +1151,11 @@ function chipsHTML(list,step=60,mul=1,fixCols=0,gold=false,spin=false,nv=0){
   let rows=n<=4?1:2,cols=Math.ceil(n/rows);
   if(cols>MAXC){cols=MAXC;rows=Math.ceil(n/cols)}
   if(fixCols){cols=fixCols}
-  const maxLen=Math.max(3,...list.map(w=>[...String(w.name)].length));
+  const pad2=nm=>String(nm).replace(/(\D)(\d)$/,(m,a,b)=>a+'0'+b);  // 끝 숫자가 한 자리여도 두 자리 기준으로 크기 계산(Table 9 = Table 14 크기)
+  const maxLen=Math.max(3,...list.map(w=>[...pad2(w.name)].length));
   const cap=n<=1?120:n<=2?96:n<=4?72:n<=8?48:32; // 당첨자가 적을수록 글씨를 크게
   const fs=Math.max(12,Math.floor(Math.min(cap,Math.floor((avail/cols-14)/(maxLen*0.98)))*mul));
-  const emW=nm=>[...String(nm)].reduce((t,c)=>t+(/[A-Z]/.test(c)?.72:/[a-z0-9 \-.]/.test(c)?.56:1),0),colMax=Math.round(Math.max(3,...list.map(w=>emW(w.name)))*fs+fs*1.3);  // 이름 길이에 맞춰 칸 폭 제한(1명일 때 화면 끝까지 늘어나지 않게)
+  const emW=nm=>[...String(nm)].reduce((t,c)=>t+(/[A-Z]/.test(c)?.72:/[a-z0-9 \-.]/.test(c)?.56:1),0),colMax=Math.round(Math.max(3,...list.map(w=>emW(pad2(w.name))))*fs+fs*1.3);  // 이름 길이에 맞춰 칸 폭 제한(1명일 때 화면 끝까지 늘어나지 않게)
   const gtc=list.length<cols?`repeat(${list.length},min(calc((100% - ${(cols-1)*10}px)/${cols}),${colMax}px))`:`repeat(${cols},minmax(0,${colMax}px))`;
   return`<div class="chipgrid2" style="grid-template-columns:${gtc};justify-content:center;font-size:${fs}px">`+list.map((w,i)=>`<div class="big-chip2${gold?' gold':''}" style="animation-delay:${i*step}ms">${spin?`<span class="cn" id="s${i}">?</span><small id="u${i}"${list.some(x=>x.sub)?'':' style="display:none"'}>&nbsp;</small>`:esc(w.name)+(w.sub?`<small>${esc(w.sub)}</small>`:'')}</div>`).join('')+`</div>`}
 const srcKey=q=>q&&q.src==='tables'?'tables':'people';
@@ -1167,7 +1168,7 @@ const nextTier=()=>S.prizes.findIndex((q,i)=>i>S.cur&&remain(q)>0);
 function congratHTML(p){
   const k=srcKey(p),tiers=k==='tables'?S.prizes.filter(q=>srcKey(q)===k&&wonOf(q).length):[p];
   return `<div class="cg">`+
-    tiers.map(q=>{const w=orderedWinners(q);return `<div class="cg-tier">${chipsHTML(w,70,.66,0,true)}</div>`}).join('')+`</div>`;
+    `<div class="cg-tier">${chipsHTML(tiers.flatMap(q=>orderedWinners(q)),70,.66,0,true)}</div>`+`</div>`;  // 모든 등수의 결과를 한 줄(가로)로 나란히
 }
 function renderIdle(){
   const p=curPrize();$('#btnOpenAll').style.display='none';
