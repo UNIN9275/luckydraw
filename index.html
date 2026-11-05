@@ -86,7 +86,7 @@ label.ck{display:inline-flex;gap:8px;align-items:center;cursor:pointer;color:var
 input[type=checkbox]{width:18px;height:18px;accent-color:var(--gold)}
 
 /* 추첨 무대 */
-.stage-head{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:14px;padding-top:var(--ttop,36px)}
+.stage-head{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:14px;padding-top:max(0px,calc(var(--ttop,36px) - 16px))}
 .stage-head .sp{display:none}
 .etitle{white-space:pre-line;line-height:1.25;width:100%;text-align:center;font-size:var(--tsz,40px);font-weight:400;color:var(--gold2);text-shadow:0 0 22px rgba(246,196,83,.35)}
 .ptabs{display:none}  /* 추첨 화면 위쪽 등수 칸은 숨김 (등수·상품·진행은 왼쪽 상품 칸에 표시) */
@@ -136,7 +136,8 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--gold)}
 .ssub{margin-top:8px;color:var(--mute);font-size:clamp(14px,1.8vw,26px);min-height:1.2em}
 .ssub:empty{display:none}  /* 소속이 없으면 빈 줄을 없애서 이름이 상자 위아래 가운데에 오게 */
 .sname.tick{animation:tick .09s ease-out}
-.big-chip2 .cn{display:block}
+.big-chip2 .cn{display:block;white-space:nowrap;transform-origin:center}
+.big-chip2 small{white-space:nowrap;overflow:visible!important;text-overflow:clip!important;transform-origin:center}
 .big-chip2 .cn.tick{animation:tick .09s ease-out}
 .big-chip2.gold.win{border-color:#fff;box-shadow:0 0 0 3px var(--gold),0 0 46px rgba(255,214,102,.75);animation:pop .6s ease-out}
 .big-chip2.gold.win .cn{color:var(--gold2)}
@@ -1137,7 +1138,7 @@ function fitStage(){
   const head=document.querySelector('.stage-head'),t=$('#stTitle'),ar=$('#arena'),st=ar.parentElement;
   const base=S.titleSize||40;let top=S.titleTop??36;
   ar.style.minHeight='';t.style.setProperty('--tsz',base+'px');head.style.setProperty('--ttop',top+'px');
-  const tp=ar.getBoundingClientRect().top+scrollY;ar.style.minHeight=Math.max(220,Math.round(innerHeight-2*tp))+'px';  // 슬롯·결과 박스가 화면 위아래 정가운데에 오도록
+  const tp=ar.getBoundingClientRect().top+scrollY;ar.style.minHeight=Math.max(220,Math.round(innerHeight-2*tp))+'px';fitNames();  // 슬롯·결과 박스가 화면 위아래 정가운데에 오도록
 }
 let fitTimer=null;const fitSoon=()=>{clearTimeout(fitTimer);fitTimer=setTimeout(fitStage,60)};
 addEventListener('resize',fitSoon);document.addEventListener('fullscreenchange',fitSoon);
@@ -1151,13 +1152,14 @@ function chipsHTML(list,step=60,mul=1,fixCols=0,gold=false,spin=false,nv=0){
   let rows=n<=3?1:2,cols=Math.ceil(n/rows);  // 4명은 위 2개·아래 2개
   if(cols>MAXC){cols=MAXC;rows=Math.ceil(n/cols)}
   if(fixCols){cols=fixCols}
-  const pad2=nm=>String(nm).replace(/(\D)(\d)$/,(m,a,b)=>a+'0'+b);  // 끝 숫자가 한 자리여도 두 자리 기준으로 크기 계산(Table 9 = Table 14 크기)
-  const maxLen=Math.max(3,...list.map(w=>[...pad2(w.name)].length));
-  const cap=n<=1?120:n<=2?96:n<=4?72:n<=8?48:32; // 당첨자가 적을수록 글씨를 크게
-  const fs=Math.max(12,Math.floor(Math.min(cap,Math.floor((avail/cols-14)/(maxLen*0.98)))*mul));
-  const emW=nm=>[...String(nm)].reduce((t,c)=>t+(/[A-Z]/.test(c)?.72:/[a-z0-9 \-.]/.test(c)?.56:1),0),colMax=Math.round(Math.max(3,...list.map(w=>emW(pad2(w.name))))*fs+fs*1.3);  // 이름 길이에 맞춰 칸 폭 제한(1명일 때 화면 끝까지 늘어나지 않게)
+  const cap=n<=1?100:n<=2?96:n<=4?72:n<=8?48:32; // 당첨자가 적을수록 글씨를 크게
+  const fs=Math.max(12,Math.floor(Math.min(cap,Math.floor((avail/cols-14)/(5*0.98)))*mul)); // 이름 길이와 무관: 인원수·화면 폭으로만 정해져 모든 박스 크기 동일
+  // 높이는 항상 같게(글자 크기 고정), 가로 폭만 이름·소속 길이에 맞춰 늘어남(화면 폭 안에서)
+  const emW=t=>[...String(t||'')].reduce((q,c)=>q+(/[A-Z]/.test(c)?.72:/[a-z0-9 \-.,'()]/.test(c)?.56:1),0);
+  const need=Math.max(...list.map(w=>Math.max(emW(w.name)*fs,emW(w.sub)*fs*.36)))+fs*1.1;
+  const colMax=Math.round(Math.min(Math.max(need,fs*3.6),Math.floor((avail-(cols-1)*10)/cols)));
   const gtc=list.length<cols?`repeat(${list.length},min(calc((100% - ${(cols-1)*10}px)/${cols}),${colMax}px))`:`repeat(${cols},minmax(0,${colMax}px))`;
-  return`<div class="chipgrid2" style="grid-template-columns:${gtc};justify-content:center;font-size:${fs}px">`+list.map((w,i)=>`<div class="big-chip2${gold?' gold':''}" style="animation-delay:${i*step}ms">${spin?`<span class="cn" id="s${i}">?</span><small id="u${i}"${list.some(x=>x.sub)?'':' style="display:none"'}>&nbsp;</small>`:esc(w.name)+(w.sub?`<small>${esc(w.sub)}</small>`:'')}</div>`).join('')+`</div>`}
+  return`<div class="chipgrid2" style="grid-template-columns:${gtc};justify-content:center;font-size:${fs}px">`+list.map((w,i)=>`<div class="big-chip2${gold?' gold':''}" style="animation-delay:${i*step}ms">${spin?`<span class="cn" id="s${i}">?</span><small id="u${i}"${list.some(x=>x.sub)?'':' style="display:none"'}>&nbsp;</small>`:`<span class="cn">${esc(w.name)}</span>`+(list.some(x=>x.sub)?`<small>${w.sub?esc(w.sub):'&nbsp;'}</small>`:'')}</div>`).join('')+`</div>`}
 const srcKey=q=>q&&q.src==='tables'?'tables':'people';
 let congrat=null,atHome=false;
 const isCatLast=p=>{const i=S.prizes.indexOf(p),n=S.prizes[i+1];return !n||srcKey(n)!==srcKey(p)};
@@ -1233,6 +1235,8 @@ $('#btnDraw').onclick=async()=>{
 };
 
 /* --- 슬롯머신 --- */
+function fitTxt(el){if(!el)return;el.style.transform='';const cw=el.clientWidth,sw=el.scrollWidth;if(cw>0&&sw>cw+1){el.style.transformOrigin='left center';el.style.transform=`scale(${(cw/sw).toFixed(3)})`}}
+function fitNames(){document.querySelectorAll('#arena .big-chip2 .cn,#arena .big-chip2 small').forEach(fitTxt)}
 function spinSlot(i,w,pl,total){
   return new Promise(res=>{
     const n=$('#s'+i),u=$('#u'+i),box=n.parentElement,t0=performance.now();let last='';
@@ -1242,7 +1246,7 @@ function spinSlot(i,w,pl,total){
       let p=w;
       if(!fin){let guard=0;do{p=pl[rnd(pl.length)]}while(pl.length>1&&(p.id===w.id||p.name===last)&&guard++<12)}  // 도는 중에는 당첨자 이름이 마지막 직전에 미리 나오지 않게
       last=p.name;n.textContent=p.name;if(u.style.display!=='none')u.textContent=p.sub||' ';
-      n.classList.remove('tick');void n.offsetWidth;n.classList.add('tick');
+      fitTxt(n);fitTxt(u);n.classList.remove('tick');void n.offsetWidth;n.classList.add('tick');
       if(fin){box.classList.add('win');sfx('win');const r=box.getBoundingClientRect();confetti(r.left+r.width/2,r.top+r.height/2,pl.length>1?90:60);res();return}
       sfx('tick');setTimeout(tick,delay);
     })();
