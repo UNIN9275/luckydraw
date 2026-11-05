@@ -1148,7 +1148,7 @@ $('#prodbar').addEventListener('click',e=>{const b=e.target.closest('.pchip');if
 function chipsHTML(list,step=60,mul=1,fixCols=0,gold=false,spin=false,nv=0){
   const n=Math.max(list.length,nv||0);if(!list.length)return'';
   const avail=Math.max(320,($('#arena').clientWidth||820)-70),MAXC=14;
-  let rows=n<=4?1:2,cols=Math.ceil(n/rows);
+  let rows=n<=3?1:2,cols=Math.ceil(n/rows);  // 4명은 위 2개·아래 2개
   if(cols>MAXC){cols=MAXC;rows=Math.ceil(n/cols)}
   if(fixCols){cols=fixCols}
   const pad2=nm=>String(nm).replace(/(\D)(\d)$/,(m,a,b)=>a+'0'+b);  // 끝 숫자가 한 자리여도 두 자리 기준으로 크기 계산(Table 9 = Table 14 크기)
