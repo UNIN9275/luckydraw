@@ -121,6 +121,10 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--gold)}
 .controls{display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap}
 .big{font-size:clamp(20px,2.4vw,30px);padding:16px 44px;border-radius:16px}
 #btnDraw{font-size:clamp(28px,2.9vw,42px);padding:20px 70px;border-radius:20px;min-width:280px}
+/* 추첨 단추는 화면 아래에 항상 고정 */
+#pg-draw .controls{position:fixed;left:0;right:0;bottom:20px;margin:0;z-index:30;pointer-events:none}
+#pg-draw .controls .btn{pointer-events:auto}
+#pg-draw.page{padding-bottom:130px}
 
 /* 슬롯 */
 .slots{display:grid;gap:18px;width:100%;justify-content:center;grid-template-columns:repeat(auto-fit,minmax(260px,420px))}
