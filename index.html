@@ -1122,7 +1122,8 @@ function renderProdPanel(){
 }
 
 function renderStage(){
-  $('#stTitle').innerHTML=titleHTML(S.title||'럭키드로우');$('#stTitle').style.setProperty('--tsz',(S.titleSize||40)+'px');$('#stTitle').style.textAlign=S.titleAlign||'center';$('#stTitle').style.fontFamily=fontStack(S.titleFont);$('#stTitle').style.fontWeight=S.titleBold?700:400;document.querySelector('.stage-head').style.setProperty('--ttop',(S.titleTop??36)+'px');
+  const cgNow=!atHome&&congrat===congKey(curPrize())&&remain(curPrize())===0;  // 결과 축하 화면이면 제목 자리에 Congratulations 표시
+  $('#stTitle').innerHTML=cgNow?'🎉 Congratulations 🎊':titleHTML(S.title||'럭키드로우');$('#stTitle').style.setProperty('--tsz',(S.titleSize||40)+'px');$('#stTitle').style.textAlign=S.titleAlign||'center';$('#stTitle').style.fontFamily=fontStack(S.titleFont);$('#stTitle').style.fontWeight=S.titleBold?700:400;document.querySelector('.stage-head').style.setProperty('--ttop',(S.titleTop??36)+'px');
   $('#ptabs').innerHTML=ptabsHTML();$('#prodbar').innerHTML=prodbarHTML();
   renderIdle();renderSide();updateButton();renderProdPanel();fitStage();
 }
@@ -1165,8 +1166,7 @@ const needCongrat=p=>remain(p)===0&&congrat!==congKey(p)&&wonOf(p).length>0&&(sr
 const nextTier=()=>S.prizes.findIndex((q,i)=>i>S.cur&&remain(q)>0);
 function congratHTML(p){
   const k=srcKey(p),tiers=k==='tables'?S.prizes.filter(q=>srcKey(q)===k&&wonOf(q).length):[p];
-  const tf=fontStack(S.titleFont).replace(/"/g,"'"),fw=S.titleBold?700:400;
-  return `<div class="cg"><div class="cg-t" style="font-family:${tf};font-weight:${fw};font-size:${Math.round((S.titleSize||40)*.8)}px">🎉 Congratulations 🎊</div>`+
+  return `<div class="cg">`+
     tiers.map(q=>{const w=orderedWinners(q);return `<div class="cg-tier">${chipsHTML(w,70,.66,0,true)}</div>`}).join('')+`</div>`;
 }
 function renderIdle(){
