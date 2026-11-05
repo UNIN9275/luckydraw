@@ -1156,10 +1156,8 @@ function chipsHTML(list,step=60,mul=1,fixCols=0,gold=false,spin=false,nv=0){
   const topY=($('#arena').getBoundingClientRect().top||0)+scrollY,budget=Math.max(150,innerHeight-topY-170-52); // 아래 추첨 단추 쪽 170px은 비워 둠(박스와 단추 사이 간격)
   const fsH=Math.floor(((budget-(rows-1)*10)/rows)/(list.some(x=>x.sub)?2.6:2.1));
   const fs=Math.max(12,Math.min(fsW,fsH));
-  // 높이는 항상 같게(글자 크기 고정), 가로 폭만 이름·소속 길이에 맞춰 늘어남(화면 폭 안에서)
-  const emW=t=>[...String(t||'')].reduce((q,c)=>q+(/[A-Z]/.test(c)?.72:/[a-z0-9 \-.,'()]/.test(c)?.56:1),0);
-  const need=Math.max(...list.map(w=>Math.max(emW(w.name)*fs,emW(w.sub)*fs*.36)))+fs*1.1;
-  const colMax=Math.round(Math.min(Math.max(need,fs*3.6),Math.floor((avail-(cols-1)*10)/cols)));
+  // 박스 크기는 인원수·화면 크기로만 정해져 항상 고정(가로·세로). 글자가 길면 박스에 맞게 글씨만 줄임
+  const colMax=Math.round(Math.min(Math.floor((avail-(cols-1)*10)/cols),fs*7));
   const gtc=list.length<cols?`repeat(${list.length},min(calc((100% - ${(cols-1)*10}px)/${cols}),${colMax}px))`:`repeat(${cols},minmax(0,${colMax}px))`;
   return`<div class="chipgrid2" style="grid-template-columns:${gtc};justify-content:center;font-size:${fs}px">`+list.map((w,i)=>`<div class="big-chip2${gold?' gold':''}" style="animation-delay:${i*step}ms">${spin?`<span class="cn" id="s${i}">?</span><small id="u${i}"${list.some(x=>x.sub)?'':' style="display:none"'}>&nbsp;</small>`:`<span class="cn">${esc(w.name)}</span>`+(list.some(x=>x.sub)?`<small>${w.sub?esc(w.sub):'&nbsp;'}</small>`:'')}</div>`).join('')+`</div>`}
 const srcKey=q=>q&&q.src==='tables'?'tables':'people';
