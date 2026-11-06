@@ -1040,6 +1040,18 @@ function validateCfg(){
   if(S.prizes.some(p=>!p.name.trim()))return '등수 이름을 입력해 주세요';
   return '';
 }
+/* 화면 안 확인창(브라우저 confirm 대체): 전체화면이 풀리지 않아요 */
+function askDlg(msg,okText,cancelText){
+  return new Promise(res=>{
+    let d=$('#askDlg');
+    if(!d){d=document.createElement('div');d.id='askDlg';d.style.cssText='position:fixed;inset:0;z-index:95;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6)';
+      d.innerHTML='<div class="card" style="width:min(560px,92vw);margin:0;text-align:center;padding:30px 28px"><div style="font-size:44px;line-height:1">❔</div><div id="akMsg" style="margin:16px 0 22px;font-size:20px;line-height:1.7;white-space:pre-line"></div><div style="display:flex;gap:12px;justify-content:center"><button class="btn" id="akNo" style="min-width:150px;padding:14px 24px;font-size:18px"></button><button class="btn gold" id="akOk" style="min-width:150px;padding:14px 24px;font-size:18px;box-shadow:0 4px 0 #b8861c,0 8px 18px rgba(0,0,0,.35)"></button></div></div>';
+      document.body.appendChild(d)}
+    $('#akMsg').textContent=msg;$('#akOk').textContent=okText||'확인';$('#akNo').textContent=cancelText||'취소';
+    const done=v=>{d.style.display='none';document.removeEventListener('keydown',key,true);res(v)};
+    const key=e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();done(false)}else if(e.key==='Enter'){e.preventDefault();e.stopPropagation();done(true)}};
+    $('#akOk').onclick=()=>done(true);$('#akNo').onclick=()=>done(false);d.onmousedown=e=>{if(e.target===d)done(false)};
+    document.addEventListener('keydown',key,true);d.style.display='flex';setTimeout(()=>$('#akOk').focus(),30)})}
 /* 저장 안내: 화면 가운데에 크게 표시 */
 function savedDlg(ok,title,lines){
   let d=$('#savedDlg');
@@ -1199,9 +1211,11 @@ function renderSide(){
   $('#wlist').innerHTML=h;
   const sd=document.querySelector('.side');if(sd)sd.scrollTop=sd.scrollHeight;
 }
-$('#wlist').addEventListener('click',e=>{
+$('#wlist').addEventListener('click',async e=>{
   const id=e.target.dataset.abs;if(!id||busy)return;const p=S.prizes.find(q=>String(q.id)===e.target.dataset.pid)||curPrize();
-  if(!confirm('이 분을 불참 처리하고 당첨에서 뺄까요? (이후 추첨에서도 제외됩니다)'))return;
+  const w=wonOf(p).find(x=>x.id===id),nm=w?`'${w.name}' 님을`:'이 분을';
+  if(!await askDlg(nm+' 불참 처리하고 당첨에서 뺄까요?\n(이후 추첨에서도 제외됩니다)','불참 처리','취소'))return;
+  if(busy)return;
   S.winners[p.id]=wonOf(p).filter(w=>w.id!==id);if(!S.absent.includes(id))S.absent.push(id);S.cur=S.prizes.indexOf(p);congrat=null;save();renderStage();toast('불참 처리했어요. 추첨 시작을 눌러 다시 뽑아 주세요')});
 if($('#btnUndo'))$('#btnUndo').onclick=()=>{if(busy)return;const p=curPrize(),l=wonOf(p);if(!l.length)return toast('취소할 당첨이 없어요');l.pop();save();renderStage();toast('마지막 당첨을 취소했어요')};
 function updateButton(){
@@ -1560,9 +1574,9 @@ $('#btnPrint').onclick=()=>print();
 $('#pinSum').onclick=e=>{const d=e.target.dataset&&e.target.dataset.pinundo;if(!d||window.LDAuth.role!=='admin')return;S.pins=(S.pins||[]).filter(z=>z.pid!==d);save();renderSetup()};
 $('#pinSum').onchange=e=>{const d=e.target.dataset&&e.target.dataset.pinsel;if(!d||window.LDAuth.role!=='admin')return;const z=(S.pins||[]).find(v=>v.pid===d);if(!z)return;z.prizeId=e.target.value;save();renderSetup();toast('회차를 바꿨어요')};
 $('#btnResDone').onclick=()=>{if(busy)return;atHome=true;S.cur=0;congrat=null;save();showTab('draw')};
-$('#btnRedo').onclick=()=>{if(busy)return toast('추첨이 끝난 뒤에 눌러 주세요');
+$('#btnRedo').onclick=async()=>{if(busy)return toast('추첨이 끝난 뒤에 눌러 주세요');
   if(!winnerCount()){atHome=false;S.winners={};S.absent=[];S.cur=0;S.pcur={};save();renderStage();return toast('처음 상태예요. 추첨 시작을 눌러 주세요')}
-  if(!confirm('당첨 기록과 불참 처리를 모두 지우고 처음(첫 번째 등수)부터 다시 추첨할까요?'+String.fromCharCode(10)+String.fromCharCode(10)+'(명단·상품 설정은 그대로이고, 지우기 전의 결과는 보관함에 자동 보관돼요)'))return;
+  if(!await askDlg('당첨 기록과 불참 처리를 모두 지우고 처음(첫 번째 등수)부터 다시 추첨할까요?\n\n(명단·상품 설정은 그대로이고, 지우기 전의 결과는 보관함에 자동 보관돼요)','리셋','취소'))return;
   atHome=false;archiveCurrent('다시 추첨(리셋)');S.winners={};S.absent=[];S.cur=0;S.pcur={};save();renderStage();toast('리셋했어요. 처음부터 다시 추첨할 수 있어요')};
 $('#btnResetWin').onclick=()=>{if(confirm('모든 당첨 기록과 불참 처리를 초기화할까요? (명단·상품 설정은 유지, 지우기 전에 보관함에 자동 보관돼요)')){archiveCurrent('기록 초기화');S.winners={};S.absent=[];S.cur=0;S.pcur={};save();renderResults()}};
 $('#btnResetAll').onclick=()=>{if(confirm('명단, 상품, 당첨 기록을 모두 지우고 처음 상태로 되돌릴까요? (당첨 기록은 지우기 전에 보관함에 자동 보관돼요)')){archiveCurrent('전체 초기화');{const ev=S.event;S=defaults();if(ev)S.event=ev}save();renderSetup();renderResults();showTab('set')}};
